@@ -31,6 +31,7 @@ contract(`Sale`, (accounts) => {
 
   describe(`Pre-sale period`, () => {
     it(`should reject purchases from James, Miguel and Edwhale.`);
+    it(`should allow owner to purchase 1 token`);
   });
 
   describe(`Sale period 0`, () => {

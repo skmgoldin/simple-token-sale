@@ -12,7 +12,7 @@ contract Sale {
     uint public startBlock;
 
     modifier saleStarted {
-        if(block.number < startBlock) { throw; }
+        if(block.number < startBlock && msg.sender != owner) { throw; }
         _;
     }
 
