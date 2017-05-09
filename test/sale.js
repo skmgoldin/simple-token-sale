@@ -46,7 +46,7 @@ contract(`Sale`, (accounts) => {
 
   describe(`Sale period 1`, () => {
     it(`should reject a transfer of ${distros.publicSale} tokens to Edwhale.`);
-    it(`should transfer ${distros.publicSale - 111} tokens to Edwhale.`);
+    it(`should transfer ${distros.publicSale - 112} tokens to Edwhale.`);
   });
 
   describe(`Post-sale period`, () => {
