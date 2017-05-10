@@ -1,3 +1,4 @@
+/*global web3 describe before artifacts assert it contract:true*/
 const Sale = artifacts.require(`./Sale.sol`);
 const Token = artifacts.require(`./HumanStandardToken.sol`);
 const fs = require(`fs`);
@@ -44,13 +45,57 @@ contract(`Sale`, (accounts) => {
       .then((balance) => assert.equal(balance.valueOf(), distros.publicSale,
         `The sale contract was not given the correct number of tokens to sell`))
     );
-  })
+  });
 
   describe(`Owner-only functions`, () => {
-    it(`should not allow James to change the price.`);
-    it(`should not allow James to change the startBlock.`);
-    it(`should not allow James to change the owner.`);
-    it(`should not allow James to activate the emergencyStop.`);
+    it(`should not allow James to change the price.`, () =>
+       Sale.deployed()
+      .then((instance) => instance.changePrice(saleConf.price + 1, {from: james}))
+      .then(() => Sale.deployed())
+      .then((instance) => instance.price.call())
+      .then((price) => assert.equal(price.valueOf(), saleConf.price,
+        `A non-owner was able to change the sale price`))
+      .catch((err) => Sale.deployed())
+      .then((instance) => instance.price.call())
+      .then((price) => assert.equal(price.valueOf(), saleConf.price,
+        `A non-owner was able to change the sale price`))
+    );
+    it(`should not allow James to change the startBlock.`, () =>
+       Sale.deployed()
+      .then((instance) => instance.changeStartBlock(saleConf.startBlock + 1, {from: james}))
+      .then(() => Sale.deployed())
+      .then((instance) => instance.startBlock.call())
+      .then((startBlock) => assert.equal(startBlock.valueOf(), saleConf.startBlock,
+        `A non-owner was able to change the sale startBlock`))
+      .catch((err) => Sale.deployed())
+      .then((instance) => instance.startBlock.call())
+      .then((startBlock) => assert.equal(startBlock.valueOf(), saleConf.startBlock,
+        `A non-owner was able to change the sale startBlock`))
+    );
+    it(`should not allow James to change the owner.`, () =>
+       Sale.deployed()
+      .then((instance) => instance.changeOwner(james, {from: james}))
+      .then(() => Sale.deployed())
+      .then((instance) => instance.owner.call())
+      .then((owner) => assert.equal(owner.valueOf(), saleConf.owner,
+        `A non-owner was able to change the sale owner`))
+      .catch((err) => Sale.deployed())
+      .then((instance) => instance.owner.call())
+      .then((owner) => assert.equal(owner.valueOf(), saleConf.owner,
+        `A non-owner was able to change the sale owner`))
+    );
+    it(`should not allow James to activate the emergencyStop.`, () =>
+       Sale.deployed()
+      .then((instance) => instance.emergencyStop({from: james}))
+      .then(() => Sale.deployed())
+      .then((instance) => instance.startBlock.call())
+      .then((startBlock) => assert.equal(startBlock.valueOf(), saleConf.startBlock,
+        `A non-owner was able to change the sale emergencyStop`))
+      .catch((err) => Sale.deployed())
+      .then((instance) => instance.startBlock.call())
+      .then((startBlock) => assert.equal(startBlock.valueOf(), saleConf.startBlock,
+        `A non-owner was able to change the sale emergencyStop`))
+    );
     it(`should change the owner to miguel.`);
     it(`should change the owner back to owner.`);
     it(`should not allow miguel to change the price.`);
@@ -87,4 +132,4 @@ contract(`Sale`, (accounts) => {
     it(`should report a zero balance for the sale contract.`);
     it(`should allow Edwhale to transfer 10 tokens to James.`);
   });
-})
+});
