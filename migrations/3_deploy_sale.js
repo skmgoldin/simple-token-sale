@@ -7,6 +7,14 @@ module.exports = function(deployer, network, accounts) {
     if(network === `development`) {
       saleConf.owner = accounts[0];
       saleConf.wallet = accounts[1];
+      saleConf.prod = false;
+      fs.writeFileSync(`./conf/sale.json`, JSON.stringify(saleConf, null, `  `));
+    }
+
+    if(network === `mainnet`) {
+      if(saleConf.prod !== true) {
+        throw new Error(`Sale conf file has prod flag set to false.`);
+      }
     }
 
     deployer.deploy(Sale,
