@@ -13,9 +13,24 @@ contract(`Sale`, (accounts) => {
       .then((price) => assert.equal(price.valueOf(), saleConf.price,
         `The price was not instantiated properly.`))
     );
-    it(`should instantiate with the owner set to ${saleConf.owner}.`);
-    it(`should instantiate with the wallet set to ${saleConf.wallet}.`);
-    it(`should instantiate with the startBlock set to ${saleConf.startBlock}.`);
+    it(`should instantiate with the owner set to ${saleConf.owner}.`, () =>
+      Sale.deployed()
+      .then((instance) => instance.owner.call())
+      .then((owner) => assert.equal(owner.valueOf(), saleConf.owner,
+        `The owner was not instantiated properly.`))
+    );
+    it(`should instantiate with the wallet set to ${saleConf.wallet}.`, () =>
+      Sale.deployed()
+      .then((instance) => instance.wallet.call())
+      .then((wallet) => assert.equal(wallet.valueOf(), saleConf.wallet,
+        `The wallet was not instantiated properly.`))
+    );
+    it(`should instantiate with the startBlock set to ${saleConf.startBlock}.`, () =>
+      Sale.deployed()
+      .then((instance) => instance.startBlock.call())
+      .then((startBlock) => assert.equal(startBlock.valueOf(), saleConf.startBlock,
+        `The startBlock was not instantiated properly.`))
+    );
     it(`should instantiate with ${distros.publicSale} million sellable tokens.`);
   })
 
