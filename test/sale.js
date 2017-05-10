@@ -1,4 +1,5 @@
 const Sale = artifacts.require(`./Sale.sol`);
+const Token = artifacts.require(`./HumanStandardToken.sol`);
 const fs = require(`fs`);
 
 contract(`Sale`, (accounts) => {
@@ -31,7 +32,18 @@ contract(`Sale`, (accounts) => {
       .then((startBlock) => assert.equal(startBlock.valueOf(), saleConf.startBlock,
         `The startBlock was not instantiated properly.`))
     );
-    it(`should instantiate with ${distros.publicSale} million sellable tokens.`);
+    it(`should instantiate with the token set to ${Token.address}.`, () =>
+      Sale.deployed()
+      .then((instance) => instance.token.call())
+      .then((token) => assert.equal(token.valueOf(), Token.address,
+        `The token was not instantiated properly`))
+    );
+    it(`should instantiate with ${distros.publicSale} million sellable tokens.`, () =>
+      Token.deployed()
+      .then((instance) => instance.balanceOf.call(Sale.address))
+      .then((balance) => assert.equal(balance.valueOf(), distros.publicSale,
+        `The sale contract was not given the correct number of tokens to sell`))
+    );
   })
 
   describe(`Owner-only functions`, () => {
