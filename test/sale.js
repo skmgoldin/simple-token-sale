@@ -148,8 +148,22 @@ contract(`Sale`, (accounts) => {
       .then((startBlock) => assert.equal(startBlock.valueOf(), (2**256) - 1,
         `The owner was not able to activate the emergencyStop`))
     );
-    it(`should change the startBlock to ${saleConf.startBlock}.`);
-    it(`should change the price back to ${saleConf.price}.`);
+    it(`should change the startBlock to ${saleConf.startBlock}.`, () =>
+       Sale.deployed()
+      .then((instance) => instance.changeStartBlock(saleConf.startBlock, {from: owner}))
+      .then(() => Sale.deployed())
+      .then((instance) => instance.startBlock.call())
+      .then((startBlock) => assert.equal(startBlock.valueOf(), saleConf.startBlock,
+        `The owner was not able to change the sale startBlock`))
+    );
+    it(`should change the price back to ${saleConf.price}.`, () =>
+       Sale.deployed()
+      .then((instance) => instance.changePrice(saleConf.price, {from: owner}))
+      .then(() => Sale.deployed())
+      .then((instance) => instance.price.call())
+      .then((price) => assert.equal(price.valueOf(), saleConf.price,
+        `The owner was not able to change the sale price`))
+    );
   });
 
   describe(`Pre-sale period`, () => {
