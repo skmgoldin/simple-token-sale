@@ -7,13 +7,8 @@ module.exports = function(deployer, network, accounts) {
     if(network === `development`) {
       saleConf.owner = accounts[0];
       saleConf.wallet = accounts[1];
-      saleConf.prod = false;
     }
-    if(network === `mainnet`) {
-      if(saleConf.prof === false) {
-        throw new Error(`prod flag in sale.json is false. Review it manually.`);
-      }
-    }
+
     deployer.deploy(Sale,
       saleConf.owner,
       saleConf.wallet,
