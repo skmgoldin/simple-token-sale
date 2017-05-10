@@ -1,3 +1,4 @@
+const Sale = artifacts.require(`./Sale.sol`);
 const fs = require(`fs`);
 
 contract(`Sale`, (accounts) => {
@@ -5,9 +6,13 @@ contract(`Sale`, (accounts) => {
   const distros = JSON.parse(fs.readFileSync(`./conf/distros.json`));
   const [owner, wallet, james, miguel, edwhale] = accounts;
 
-  /* Instantiation */
   describe(`Instantiation`, () => {
-    it(`should instantiate with the price set to ${saleConf.price} Wei.`);
+    it(`should instantiate with the price set to ${saleConf.price} Wei.`, () =>
+      Sale.deployed()
+      .then((instance) => instance.price.call())
+      .then((price) => assert.equal(price.valueOf(), saleConf.price,
+        `The price was not instantiated properly.`))
+    );
     it(`should instantiate with the owner set to ${saleConf.owner}.`);
     it(`should instantiate with the wallet set to ${saleConf.wallet}.`);
     it(`should instantiate with the startBlock set to ${saleConf.startBlock}.`);
