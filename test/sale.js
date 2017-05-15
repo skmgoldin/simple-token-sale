@@ -9,6 +9,14 @@ contract(`Sale`, (accounts) => {
   const [owner, wallet, james, miguel, edwhale] = accounts;
 
   describe(`Initial token issuance`, () => {
+    for(recipient in distros) {
+      it(`should instantiate ${recipient} with ${distros[recipient].amount} tokens.`, () =>
+        Token.deployed()
+        .then((instance) => instance.balanceOf.call(distros[recipient].address))
+        .then((balance) => assert.equal(balance.valueOf(), distros[recipient].amount))
+      );
+    }
+    // Sanity check
     it(`should instantiate the public sale with ${distros.publicSale.amount} tokens.`, () =>
       Token.deployed()
       .then((instance) => instance.balanceOf.call(Sale.address))
