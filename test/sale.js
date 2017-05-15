@@ -167,8 +167,28 @@ contract(`Sale`, (accounts) => {
   });
 
   describe(`Pre-sale period`, () => {
-    it(`should reject purchases from James, Miguel and Edwhale.`);
-    it(`should allow owner to purchase 1 token`);
+    it(`should reject a purchase from James.`, () =>
+      Sale.deployed()
+      .then((instance) => instance.purchaseAdToken(420,
+        {from: james, value: saleConf.price * 420}))
+      .catch((err) => Token.deployed())
+      .then((instance) => instance.balanceOf.call(james))
+      .then((balance) => assert.equal(balance.valueOf(), 0, `James was able ` +
+        `to purchase tokens in the pre-sale period.`))
+    );
+    // owner already has 500mm tokens, need to complete distros
+    it(`should allow owner to purchase 1 token`, () =>       
+      Sale.deployed()
+      .then((instance) => instance.purchaseAdToken(1,
+        {from: owner, value: saleConf.price * 1}))
+      .then(() => Token.deployed())
+      .then((instance) => instance.balanceOf.call(owner))
+      .then((balance) => assert.equal(balance.valueOf(), 1, `Owner was not able ` +
+        `to purchase tokens in the pre-sale period.`))
+      .catch((err) => { 
+        throw new Error(err); 
+      })
+    );
   });
 
   describe(`Sale period 0`, () => {
