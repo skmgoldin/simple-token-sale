@@ -8,6 +8,14 @@ contract(`Sale`, (accounts) => {
   const distros = JSON.parse(fs.readFileSync(`./conf/distros.json`));
   const [owner, wallet, james, miguel, edwhale] = accounts;
 
+  describe(`Initial token issuance`, () => {
+    it(`should instantiate the public sale with ${distros.publicSale.amount} tokens.`, () =>
+      Token.deployed()
+      .then((instance) => instance.balanceOf.call(Sale.address))
+      .then((balance) => assert.equal(balance.valueOf(), distros.publicSale.amount,
+        `The sale contract was not given the correct number of tokens to sell`))
+    );
+  });
   describe(`Instantiation`, () => {
     it(`should instantiate with the price set to ${saleConf.price} Wei.`, () =>
       Sale.deployed()
@@ -38,12 +46,6 @@ contract(`Sale`, (accounts) => {
       .then((instance) => instance.token.call())
       .then((token) => assert.equal(token.valueOf(), Token.address,
         `The token was not instantiated properly`))
-    );
-    it(`should instantiate with ${distros.publicSale.amount} million sellable tokens.`, () =>
-      Token.deployed()
-      .then((instance) => instance.balanceOf.call(Sale.address))
-      .then((balance) => assert.equal(balance.valueOf(), distros.publicSale.amount,
-        `The sale contract was not given the correct number of tokens to sell`))
     );
   });
 
