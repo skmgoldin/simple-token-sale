@@ -2,6 +2,11 @@
 const Sale = artifacts.require(`./Sale.sol`);
 const Token = artifacts.require(`./HumanStandardToken.sol`);
 const fs = require(`fs`);
+const HttpProvider = require(`ethjs-provider-http`);
+const EthRPC = require('ethjs-rpc');
+const EthQuery = require('ethjs-query');
+const ethRPC = new EthRPC(new HttpProvider('http://localhost:8545'));
+const ethQuery = new EthQuery(new HttpProvider('http://localhost:8545'));
 
 contract(`Sale`, (accounts) => {
   const saleConf = JSON.parse(fs.readFileSync(`./conf/sale.json`));
@@ -177,16 +182,21 @@ contract(`Sale`, (accounts) => {
   });
 
   describe(`Pre-sale period`, () => {
+    // Need to make this DRY, this happens a few times in the tests
     it(`should reject a purchase from James.`, () =>
       Sale.deployed()
       .then((instance) => instance.purchaseAdToken(420,
         {from: james, value: saleConf.price * 420}))
+      .then(() => Token.deployed())
+      .then((instance) => instance.balanceOf.call(james))
+      .then((balance) => assert.equal(balance.valueOf(), 0, `James was able ` +
+        `to purchase tokens in the pre-sale period.`))
       .catch((err) => Token.deployed())
       .then((instance) => instance.balanceOf.call(james))
       .then((balance) => assert.equal(balance.valueOf(), 0, `James was able ` +
         `to purchase tokens in the pre-sale period.`))
+
     );
-    // owner already has 500mm tokens, need to complete distros
     it(`should allow owner to purchase 1 token`, () =>       
       Sale.deployed()
       .then((instance) => instance.purchaseAdToken(1,
@@ -202,7 +212,33 @@ contract(`Sale`, (accounts) => {
   });
 
   describe(`Sale period 0`, () => {
-    it(`should transfer 1 token to James.`);
+    it(`should transfer 1 token to James.`, () => {
+
+      function forceMine(blockToMine) {
+        return new Promise((resolve, reject) =>
+          ethjsQuery.blockNumber()
+          .then((blockNumber) => {
+            if(blockNumber < blockToMine) {
+              ethRPC.sendAsync({method: `evm_mine`}, (err) => {
+                if(err !== undefined) { reject(err); }
+                resolve(forceMine(blockToMine));
+              });
+            }
+            resolve();
+          })
+        )
+      }
+
+      forceMine(saleConf.startBlock)
+      .then(() => Sale.deployed())
+      .then((instance) => instance.purchaseAdToken(1,
+        {from: james, value: saleConf.price * 1}))
+      .then(() => Token.deployed())
+      .then((instance) => instance.balanceOf.call(james))
+      .then((balance) => assert.equal(balance.valueOf(), 1, `James was not able ` +
+        `to purchase tokens in the sale period.`))
+      .catch((err) => { throw new Error(err); })
+    });
     it(`should transfer 10 tokens to Miguel.`);
     it(`should transfer 100 tokens to Edwhale.`);
   });
