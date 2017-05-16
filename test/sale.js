@@ -212,25 +212,28 @@ contract(`Sale`, (accounts) => {
   });
 
   describe(`Sale period 0`, () => {
-    it(`should transfer 1 token to James.`, () => {
-
+    before(() => {
       function forceMine(blockToMine) {
         return new Promise((resolve, reject) =>
-          ethjsQuery.blockNumber()
+          ethQuery.blockNumber()
           .then((blockNumber) => {
             if(blockNumber < blockToMine) {
               ethRPC.sendAsync({method: `evm_mine`}, (err) => {
-                if(err !== undefined) { reject(err); }
+                if(err !== undefined && err !== null) { reject(err); }
                 resolve(forceMine(blockToMine));
               });
+            } else {
+              resolve();
             }
-            resolve();
           })
         )
       }
 
-      forceMine(saleConf.startBlock)
-      .then(() => Sale.deployed())
+      return forceMine(saleConf.startBlock);
+    });
+
+    it(`should transfer 1 token to James.`, () => {
+      Sale.deployed()
       .then((instance) => instance.purchaseAdToken(1,
         {from: james, value: saleConf.price * 1}))
       .then(() => Token.deployed())
@@ -239,8 +242,26 @@ contract(`Sale`, (accounts) => {
         `to purchase tokens in the sale period.`))
       .catch((err) => { throw new Error(err); })
     });
-    it(`should transfer 10 tokens to Miguel.`);
-    it(`should transfer 100 tokens to Edwhale.`);
+    it(`should transfer 10 tokens to Miguel.`, () =>
+      Sale.deployed()
+      .then((instance) => instance.purchaseAdToken(10,
+        {from: miguel, value: saleConf.price * 10}))
+      .then(() => Token.deployed())
+      .then((instance) => instance.balanceOf.call(miguel))
+      .then((balance) => assert.equal(balance.valueOf(), 10, `Miguel was not able ` +
+        `to purchase tokens in the sale period.`))
+      .catch((err) => { throw new Error(err); })
+    );
+    it(`should transfer 100 tokens to Edwhale.`, () =>
+      Sale.deployed()
+      .then((instance) => instance.purchaseAdToken(100,
+        {from: edwhale, value: saleConf.price * 100}))
+      .then(() => Token.deployed())
+      .then((instance) => instance.balanceOf.call(edwhale))
+      .then((balance) => assert.equal(balance.valueOf(), 100, `Edwhale was not able ` +
+        `to purchase tokens in the sale period.`))
+      .catch((err) => { throw new Error(err); })
+    );
   });
 
   describe(`Emergency stop`, () => {
