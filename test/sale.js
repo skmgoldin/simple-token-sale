@@ -265,7 +265,41 @@ contract(`Sale`, (accounts) => {
   });
 
   describe(`Emergency stop`, () => {
-    it(`should reject purchases from James, Miguel and Edwhale.`);
+    before(() =>
+      Sale.deployed()
+      .then((instance) => instance.emergencyStop({from: owner}))
+    );
+    it(`should not transfer 1 token to James.`, () => {
+      Sale.deployed()
+      .then((instance) => instance.purchaseAdToken(1,
+        {from: james, value: saleConf.price * 1}))
+      .catch((err) => Token.deployed())
+      .then((instance) => instance.balanceOf.call(james))
+      .then((balance) => assert.equal(balance.valueOf(), 1, `James was not able ` +
+        `to purchase tokens in the emergency stop period.`))
+      .catch((err) => { throw new Error(err); })
+    });
+    it(`should not transfer 10 tokens to Miguel.`, () =>
+      Sale.deployed()
+      .then((instance) => instance.purchaseAdToken(10,
+        {from: miguel, value: saleConf.price * 10}))
+      .catch((err) => Token.deployed())
+      .then((instance) => instance.balanceOf.call(miguel))
+      .then((balance) => assert.equal(balance.valueOf(), 10, `Miguel was able ` +
+        `to purchase tokens in the emergency stop period.`))
+      .catch((err) => { throw new Error(err); })
+    );
+    it(`should not transfer 100 tokens to Edwhale.`, () =>
+      Sale.deployed()
+      .then((instance) => instance.purchaseAdToken(100,
+        {from: edwhale, value: saleConf.price * 100}))
+      .catch((err) => Token.deployed())
+      .then((instance) => instance.balanceOf.call(edwhale))
+      .then((balance) => assert.equal(balance.valueOf(), 100, `Edwhale was able ` +
+        `to purchase tokens in the emergency stop period.`))
+      .catch((err) => { throw new Error(err); })
+    );
+
   });
 
   describe(`Sale period 1`, () => {
