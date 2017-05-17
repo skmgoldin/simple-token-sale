@@ -22,7 +22,8 @@ contract(`Sale`, (accounts) => {
       );
     }
     // Sanity check
-    it(`should instantiate the public sale with ${distros.publicSale.amount} tokens.`, () =>
+    it(`should instantiate the public sale with ${distros.publicSale.amount} tokens. ` +
+      `(This is a sanity check.).`, () =>
       Token.deployed()
       .then((instance) => instance.balanceOf.call(Sale.address))
       .then((balance) => assert.equal(balance.valueOf(), distros.publicSale.amount,
@@ -303,13 +304,13 @@ contract(`Sale`, (accounts) => {
   });
 
   describe(`Sale period 1`, () => {
-    it(`should reject a transfer of ${distros.publicSale} tokens to Edwhale.`);
-    it(`should transfer ${distros.publicSale - 112} tokens to Edwhale.`);
+    it(`should reject a transfer of ${distros.publicSale.amount} tokens to Edwhale.`);
+    it(`should transfer ${distros.publicSale.amount - 112} tokens to Edwhale.`);
   });
 
   describe(`Post-sale period`, () => {
     it(`should reject purchases from James, Miguel and Edwhale.`);
-    it(`should report ${distros.publicSale * saleConf.price} Wei in the wallet.`);
+    it(`should report ${distros.publicSale.amount * saleConf.price} Wei in the wallet.`);
     it(`should report a zero balance for the sale contract.`);
     it(`should allow Edwhale to transfer 10 tokens to James.`);
   });
