@@ -360,8 +360,25 @@ contract(`Sale`, (accounts) => {
         new BN(distros.publicSale.amount, 10).sub(new BN(`12`, 10)).toString(10),
         `Edwhale was able to purchase tokens after the sale ended.`))
     );
-    it(`should report ${distros.publicSale.amount * saleConf.price} Wei in the wallet.`);
-    it(`should report a zero balance for the sale contract.`);
-    it(`should allow Edwhale to transfer 10 tokens to James.`);
+    it(`should report ` +
+      `${new BN(distros.publicSale.amount, 10).mul(new BN(saleConf.price, 10)).toString(10)} ` +
+      `Wei in the wallet.`, () =>
+      ethQuery.getBalance(saleConf.wallet)
+      .then((balance) => assert.equal(balance.toString(10),
+        new BN(distros.publicSale.amount, 10).mul(new BN(saleConf.price, 10)).toString(10),
+        `The amount of Ether in the wallet is not what it should be at sale end`))
+    );
+    it(`should report a zero balance for the sale contract.`, () =>
+      getBalanceOf(Sale.address)
+      .then((balance) => assert.equal(balance.toString(10), `0`, `The sale ` +
+        `ended with tokens still in the sale contract`))
+    );
+    it(`should allow Edwhale to transfer 10 tokens to James.`, () =>
+      Token.deployed()
+      .then((instance) => instance.transfer(james, `10`, {from: edwhale}))
+      .then(() => getBalanceOf(james))
+      .then((balance) => assert.equal(balance.toString(10), `11`,
+        `Edwhale was not able to transfer tokens to James`))
+    );
   });
 });
