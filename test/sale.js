@@ -94,10 +94,9 @@ contract(`Sale`, (accounts) => {
     it(`should not allow James to change the price.`, () =>
        Sale.deployed()
       .then((instance) => instance.changePrice(saleConf.price + 1, {from: james}))
-      .then(() => Sale.deployed())
-      .then((instance) => instance.price.call())
-      .then((price) => assert.equal(price.toString(10), saleConf.price.toString(10),
-        `A non-owner was able to change the sale price`))
+      .then(() => {
+        throw new Error(`A non-owner was able to change the sale price`); 
+      })
       .catch((err) => Sale.deployed())
       .then((instance) => instance.price.call())
       .then((price) => assert.equal(price.toString(10), saleConf.price.toString(10),
@@ -107,11 +106,9 @@ contract(`Sale`, (accounts) => {
        Sale.deployed()
       .then((instance) => instance.changeStartBlock(saleConf.startBlock.add(1),
         {from: james}))
-      .then(() => Sale.deployed())
-      .then((instance) => instance.startBlock.call())
-      .then((startBlock) => assert.equal(startBlock.toString(10),
-        saleConf.startBlock.toString(10),
-        `A non-owner was able to change the sale startBlock`))
+      .then(() => {
+        throw new Error(`A non-owner was able to change the sale startBlock`); 
+      })
       .catch((err) => Sale.deployed())
       .then((instance) => instance.startBlock.call())
       .then((startBlock) => assert.equal(startBlock.toString(10),
@@ -121,10 +118,9 @@ contract(`Sale`, (accounts) => {
     it(`should not allow James to change the owner.`, () =>
        Sale.deployed()
       .then((instance) => instance.changeOwner(james, {from: james}))
-      .then(() => Sale.deployed())
-      .then((instance) => instance.owner.call())
-      .then((owner) => assert.equal(owner.valueOf(), saleConf.owner,
-        `A non-owner was able to change the sale owner`))
+      .then(() => {
+        throw new Error(`A non-owner was able to change the sale owner`);
+      })
       .catch((err) => Sale.deployed())
       .then((instance) => instance.owner.call())
       .then((owner) => assert.equal(owner.valueOf(), saleConf.owner,
@@ -133,11 +129,9 @@ contract(`Sale`, (accounts) => {
     it(`should not allow James to activate the emergencyStop.`, () =>
        Sale.deployed()
       .then((instance) => instance.emergencyStop({from: james}))
-      .then(() => Sale.deployed())
-      .then((instance) => instance.startBlock.call())
-      .then((startBlock) => assert.equal(startBlock.toString(10),
-        saleConf.startBlock.toString(10),
-        `A non-owner was able to activate the emergencyStop`))
+      .then(() => {
+        throw new Error(`A non-owner was able to activate the emergencyStop`);
+      })
       .catch((err) => Sale.deployed())
       .then((instance) => instance.startBlock.call())
       .then((startBlock) => assert.equal(startBlock.toString(10),
@@ -164,11 +158,9 @@ contract(`Sale`, (accounts) => {
        Sale.deployed()
       .then((instance) => instance.changePrice(saleConf.price.add(1),
         {from: miguel}))
-      .then(() => Sale.deployed())
-      .then((instance) => instance.price.call())
-      .then((price) => assert.equal(price.toString(10),
-        saleConf.price.toString(10),
-        `A non-owner was able to change the sale price`))
+      .then(() => {
+        throw new Error(`A non-owner was able to change the sale price`);
+      })
       .catch((err) => Sale.deployed())
       .then((instance) => instance.price.call())
       .then((price) => assert.equal(price.toString(10),
