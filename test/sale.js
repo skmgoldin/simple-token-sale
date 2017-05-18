@@ -14,6 +14,9 @@ contract(`Sale`, (accounts) => {
   const distros = JSON.parse(fs.readFileSync(`./conf/distros.json`));
   const [owner, wallet, james, miguel, edwhale] = accounts;
 
+  /*
+   * Utility Functions
+   */
   function purchaseAdToken(actor, amount) {
     if(!BN.isBN(amount)) { throw new Error(`Supplied amount is not a BN.`); }
     return Sale.deployed()
@@ -27,6 +30,7 @@ contract(`Sale`, (accounts) => {
     .then((balance) =>  { return new BN(balance.valueOf(), 10); })
   }
 
+  // Convert strings in conf files to BNs
   before(() => {
     for(recipient in distros) {
       distros[recipient].amount = new BN(distros[recipient].amount, 10);
@@ -56,7 +60,7 @@ contract(`Sale`, (accounts) => {
     it(`should instantiate with the price set to ${saleConf.price} Wei.`, () =>
       Sale.deployed()
       .then((instance) => instance.price.call())
-      .then((price) => assert.equal(price.valueOf(), saleConf.price,
+      .then((price) => assert.equal(price.toString(10), saleConf.price.toString(10),
         `The price was not instantiated properly.`))
     );
     it(`should instantiate with the owner set to ${saleConf.owner}.`, () =>
@@ -74,7 +78,8 @@ contract(`Sale`, (accounts) => {
     it(`should instantiate with the startBlock set to ${saleConf.startBlock}.`, () =>
       Sale.deployed()
       .then((instance) => instance.startBlock.call())
-      .then((startBlock) => assert.equal(startBlock.valueOf(), saleConf.startBlock,
+      .then((startBlock) => assert.equal(startBlock.toString(10),
+        saleConf.startBlock.toString(10),
         `The startBlock was not instantiated properly.`))
     );
     it(`should instantiate with the token set to ${Token.address}.`, () =>
@@ -91,23 +96,26 @@ contract(`Sale`, (accounts) => {
       .then((instance) => instance.changePrice(saleConf.price + 1, {from: james}))
       .then(() => Sale.deployed())
       .then((instance) => instance.price.call())
-      .then((price) => assert.equal(price.valueOf(), saleConf.price,
+      .then((price) => assert.equal(price.toString(10), saleConf.price.toString(10),
         `A non-owner was able to change the sale price`))
       .catch((err) => Sale.deployed())
       .then((instance) => instance.price.call())
-      .then((price) => assert.equal(price.valueOf(), saleConf.price,
+      .then((price) => assert.equal(price.toString(10), saleConf.price.toString(10),
         `A non-owner was able to change the sale price`))
     );
     it(`should not allow James to change the startBlock.`, () =>
        Sale.deployed()
-      .then((instance) => instance.changeStartBlock(saleConf.startBlock + 1, {from: james}))
+      .then((instance) => instance.changeStartBlock(saleConf.startBlock.add(1),
+        {from: james}))
       .then(() => Sale.deployed())
       .then((instance) => instance.startBlock.call())
-      .then((startBlock) => assert.equal(startBlock.valueOf(), saleConf.startBlock,
+      .then((startBlock) => assert.equal(startBlock.toString(10),
+        saleConf.startBlock.toString(10),
         `A non-owner was able to change the sale startBlock`))
       .catch((err) => Sale.deployed())
       .then((instance) => instance.startBlock.call())
-      .then((startBlock) => assert.equal(startBlock.valueOf(), saleConf.startBlock,
+      .then((startBlock) => assert.equal(startBlock.toString(10),
+        saleConf.startBlock.toString(10),
         `A non-owner was able to change the sale startBlock`))
     );
     it(`should not allow James to change the owner.`, () =>
@@ -127,11 +135,13 @@ contract(`Sale`, (accounts) => {
       .then((instance) => instance.emergencyStop({from: james}))
       .then(() => Sale.deployed())
       .then((instance) => instance.startBlock.call())
-      .then((startBlock) => assert.equal(startBlock.valueOf(), saleConf.startBlock,
+      .then((startBlock) => assert.equal(startBlock.toString(10),
+        saleConf.startBlock.toString(10),
         `A non-owner was able to activate the emergencyStop`))
       .catch((err) => Sale.deployed())
       .then((instance) => instance.startBlock.call())
-      .then((startBlock) => assert.equal(startBlock.valueOf(), saleConf.startBlock,
+      .then((startBlock) => assert.equal(startBlock.toString(10),
+        saleConf.startBlock.toString(10),
         `A non-owner was able to activate the emergencyStop`))
     );
     it(`should change the owner to miguel.`, () =>
@@ -152,14 +162,17 @@ contract(`Sale`, (accounts) => {
     );
     it(`should not allow miguel to change the price.`, () =>
        Sale.deployed()
-      .then((instance) => instance.changePrice(saleConf.price + 1, {from: miguel}))
+      .then((instance) => instance.changePrice(saleConf.price.add(1),
+        {from: miguel}))
       .then(() => Sale.deployed())
       .then((instance) => instance.price.call())
-      .then((price) => assert.equal(price.valueOf(), saleConf.price,
+      .then((price) => assert.equal(price.toString(10),
+        saleConf.price.toString(10),
         `A non-owner was able to change the sale price`))
       .catch((err) => Sale.deployed())
       .then((instance) => instance.price.call())
-      .then((price) => assert.equal(price.valueOf(), saleConf.price,
+      .then((price) => assert.equal(price.toString(10),
+        saleConf.price.toString(10),
         `A non-owner was able to change the sale price`))
     );
     it(`should change the price to 1.`, () =>
@@ -167,7 +180,7 @@ contract(`Sale`, (accounts) => {
       .then((instance) => instance.changePrice(new BN(`1`, 10), {from: owner}))
       .then(() => Sale.deployed())
       .then((instance) => instance.price.call())
-      .then((price) => assert.equal(price.valueOf(), `1`,
+      .then((price) => assert.equal(price.toString(10), `1`,
         `The owner was not able to change the price`))
     );
     it(`should change the startBlock to 2666.`, () =>
@@ -246,7 +259,7 @@ contract(`Sale`, (accounts) => {
         )
       }
 
-      return forceMine(new BN(saleConf.startBlock, 10));
+      return forceMine(saleConf.startBlock);
     });
 
     it(`should transfer 1 token to James.`, () => {
