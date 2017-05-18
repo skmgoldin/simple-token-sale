@@ -6,7 +6,7 @@ module.exports = function(deployer, network, accounts) {
     const saleConf = JSON.parse(fs.readFileSync(`./conf/sale.json`));
     if(network === `development`) {
       saleConf.owner = accounts[0];
-      saleConf.wallet = accounts[1];
+      saleConf.wallet = `0x000000000000000000000000000000000000dead`;
       saleConf.prod = false;
       fs.writeFileSync(`./conf/sale.json`, JSON.stringify(saleConf, null, `  `));
     }
