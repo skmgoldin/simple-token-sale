@@ -275,6 +275,26 @@ contract(`Sale`, (accounts) => {
         `to purchase tokens in the sale period.`))
       .catch((err) => { throw new Error(err); })
     );
+    it(`should not transfer 100 tokens to Edwhale when not enough Ether is sent.`, () =>
+      Sale.deployed()
+      .then((instance) => instance.purchaseAdToken(new BN(`100`, 10),
+        {from: actor, value: new BN(`100`, 10).mul(saleConf.price).sub(`1`, 10)}))
+      .then(() => { throw new Error(`Transaction succeeded which should have failed.`); })
+      .catch((err) => getBalanceOf(edwhale))
+      .then((balance) => assert.equal(balance.toString(10), `100`, `Edwhale was able ` +
+        `to purchase tokens while sending too little Ether.`))
+      .catch((err) => { throw new Error(err); })
+    );
+    it(`should not transfer 100 tokens to Edwhale when too much Ether is sent.`, () =>
+      Sale.deployed()
+      .then((instance) => instance.purchaseAdToken(new BN(`100`, 10),
+        {from: actor, value: new BN(`100`, 10).mul(saleConf.price).add(`1`, 10)}))
+      .then(() => { throw new Error(`Transaction succeeded which should have failed.`); })
+      .catch((err) => getBalanceOf(edwhale))
+      .then((balance) => assert.equal(balance.toString(10), `100`, `Edwhale was able ` +
+        `to purchase tokens while sending too much Ether.`))
+      .catch((err) => { throw new Error(err); })
+    );
   });
 
   describe(`Emergency stop`, () => {
