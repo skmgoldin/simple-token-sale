@@ -92,7 +92,7 @@ contract(`Sale`, (accounts) => {
 
   describe(`Owner-only functions`, () => {
     it(`should not allow James to change the price.`, () =>
-       Sale.deployed()
+      Sale.deployed()
       .then((instance) => instance.changePrice(saleConf.price + 1, {from: james}))
       .then(() => {
         throw new Error(`A non-owner was able to change the sale price`); 
@@ -103,7 +103,7 @@ contract(`Sale`, (accounts) => {
         `A non-owner was able to change the sale price`))
     );
     it(`should not allow James to change the startBlock.`, () =>
-       Sale.deployed()
+      Sale.deployed()
       .then((instance) => instance.changeStartBlock(saleConf.startBlock.add(1),
         {from: james}))
       .then(() => {
@@ -116,7 +116,7 @@ contract(`Sale`, (accounts) => {
         `A non-owner was able to change the sale startBlock`))
     );
     it(`should not allow James to change the owner.`, () =>
-       Sale.deployed()
+      Sale.deployed()
       .then((instance) => instance.changeOwner(james, {from: james}))
       .then(() => {
         throw new Error(`A non-owner was able to change the sale owner`);
@@ -127,7 +127,7 @@ contract(`Sale`, (accounts) => {
         `A non-owner was able to change the sale owner`))
     );
     it(`should not allow James to activate the emergencyStop.`, () =>
-       Sale.deployed()
+      Sale.deployed()
       .then((instance) => instance.emergencyStop({from: james}))
       .then(() => {
         throw new Error(`A non-owner was able to activate the emergencyStop`);
@@ -139,7 +139,7 @@ contract(`Sale`, (accounts) => {
         `A non-owner was able to activate the emergencyStop`))
     );
     it(`should change the owner to miguel.`, () =>
-       Sale.deployed()
+      Sale.deployed()
       .then((instance) => instance.changeOwner(miguel, {from: owner}))
       .then(() => Sale.deployed())
       .then((instance) => instance.owner.call())
@@ -147,7 +147,7 @@ contract(`Sale`, (accounts) => {
         `The owner was not able to change the owner`))
     );
     it(`should change the owner back to owner.`, () =>
-       Sale.deployed()
+      Sale.deployed()
       .then((instance) => instance.changeOwner(owner, {from: miguel}))
       .then(() => Sale.deployed())
       .then((instance) => instance.owner.call())
@@ -155,7 +155,7 @@ contract(`Sale`, (accounts) => {
         `The owner was not able to change the owner`))
     );
     it(`should not allow miguel to change the price.`, () =>
-       Sale.deployed()
+      Sale.deployed()
       .then((instance) => instance.changePrice(saleConf.price.add(1),
         {from: miguel}))
       .then(() => {
@@ -168,7 +168,7 @@ contract(`Sale`, (accounts) => {
         `A non-owner was able to change the sale price`))
     );
     it(`should change the price to 1.`, () =>
-       Sale.deployed()
+      Sale.deployed()
       .then((instance) => instance.changePrice(new BN(`1`, 10), {from: owner}))
       .then(() => Sale.deployed())
       .then((instance) => instance.price.call())
@@ -176,7 +176,7 @@ contract(`Sale`, (accounts) => {
         `The owner was not able to change the price`))
     );
     it(`should change the startBlock to 2666.`, () =>
-       Sale.deployed()
+      Sale.deployed()
       .then((instance) => instance.changeStartBlock(new BN(`2666`, 10), {from: owner}))
       .then(() => Sale.deployed())
       .then((instance) => instance.startBlock.call())
@@ -184,7 +184,7 @@ contract(`Sale`, (accounts) => {
         `The owner was not able to change the sale startBlock`))
     );
     it(`should activate the emergencyStop.`, () =>
-       Sale.deployed()
+      Sale.deployed()
       .then((instance) => instance.emergencyStop({from: owner}))
       .then(() => Sale.deployed())
       .then((instance) => instance.startBlock.call())
@@ -193,7 +193,7 @@ contract(`Sale`, (accounts) => {
         `The owner was not able to activate the emergencyStop`))
     );
     it(`should change the startBlock to ${saleConf.startBlock}.`, () =>
-       Sale.deployed()
+      Sale.deployed()
       .then((instance) => instance.changeStartBlock(saleConf.startBlock, {from: owner}))
       .then(() => Sale.deployed())
       .then((instance) => instance.startBlock.call())
@@ -201,7 +201,7 @@ contract(`Sale`, (accounts) => {
         `The owner was not able to change the sale startBlock`))
     );
     it(`should change the price back to ${saleConf.price}.`, () =>
-       Sale.deployed()
+      Sale.deployed()
       .then((instance) => instance.changePrice(saleConf.price, {from: owner}))
       .then(() => Sale.deployed())
       .then((instance) => instance.price.call())
