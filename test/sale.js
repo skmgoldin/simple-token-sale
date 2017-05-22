@@ -17,10 +17,10 @@ contract(`Sale`, (accounts) => {
   /*
    * Utility Functions
    */
-  function purchaseAdToken(actor, amount) {
+  function purchaseToken(actor, amount) {
     if(!BN.isBN(amount)) { throw new Error(`Supplied amount is not a BN.`); }
     return Sale.deployed()
-    .then((instance) => instance.purchaseAdToken(amount,
+    .then((instance) => instance.purchaseToken(amount,
       {from: actor, value: amount.mul(saleConf.price)}))
   }
 
@@ -212,7 +212,7 @@ contract(`Sale`, (accounts) => {
 
   describe(`Pre-sale period`, () => {
     it(`should reject a purchase from James.`, () =>
-      purchaseAdToken(james, new BN(`420`, 10))
+      purchaseToken(james, new BN(`420`, 10))
       .then(() => { throw new Error(`James was able to purchase tokens when he ` +
         `should not have been able to.`); })
       .catch((err) => getBalanceOf(james))
@@ -220,7 +220,7 @@ contract(`Sale`, (accounts) => {
         `to purchase tokens in the pre-sale period.`))
     );
     it(`should allow owner to purchase 1 token`, () =>       
-      purchaseAdToken(owner, new BN(`1`, 10))
+      purchaseToken(owner, new BN(`1`, 10))
       .then(() => getBalanceOf(owner))
       .then((balance) => assert.equal(balance.toString(10), `1`, `Owner was not able ` +
         `to purchase tokens in the pre-sale period.`))
@@ -255,21 +255,21 @@ contract(`Sale`, (accounts) => {
     });
 
     it(`should transfer 1 token to James.`, () => {
-      purchaseAdToken(james, new BN(`1`, 10))
+      purchaseToken(james, new BN(`1`, 10))
       .then(() => getBalanceOf(james))
       .then((balance) => assert.equal(balance.toString(10), `1`, `James was not able ` +
         `to purchase tokens in the sale period.`))
       .catch((err) => { throw new Error(err); })
     });
     it(`should transfer 10 tokens to Miguel.`, () =>
-      purchaseAdToken(miguel, new BN(`10`, 10))
+      purchaseToken(miguel, new BN(`10`, 10))
       .then(() => getBalanceOf(miguel))
       .then((balance) => assert.equal(balance.toString(10), `10`, `Miguel was not able ` +
         `to purchase tokens in the sale period.`))
       .catch((err) => { throw new Error(err); })
     );
     it(`should transfer 100 tokens to Edwhale.`, () =>
-      purchaseAdToken(edwhale, new BN(`100`, 10))
+      purchaseToken(edwhale, new BN(`100`, 10))
       .then(() => getBalanceOf(edwhale))
       .then((balance) => assert.equal(balance.toString(10), `100`, `Edwhale was not able ` +
         `to purchase tokens in the sale period.`))
@@ -277,7 +277,7 @@ contract(`Sale`, (accounts) => {
     );
     it(`should not transfer 100 tokens to Edwhale when not enough Ether is sent.`, () =>
       Sale.deployed()
-      .then((instance) => instance.purchaseAdToken(new BN(`100`, 10),
+      .then((instance) => instance.purchaseToken(new BN(`100`, 10),
         {from: actor, value: new BN(`100`, 10).mul(saleConf.price).sub(`1`, 10)}))
       .then(() => { throw new Error(`Transaction succeeded which should have failed.`); })
       .catch((err) => getBalanceOf(edwhale))
@@ -287,7 +287,7 @@ contract(`Sale`, (accounts) => {
     );
     it(`should not transfer 100 tokens to Edwhale when too much Ether is sent.`, () =>
       Sale.deployed()
-      .then((instance) => instance.purchaseAdToken(new BN(`100`, 10),
+      .then((instance) => instance.purchaseToken(new BN(`100`, 10),
         {from: actor, value: new BN(`100`, 10).mul(saleConf.price).add(`1`, 10)}))
       .then(() => { throw new Error(`Transaction succeeded which should have failed.`); })
       .catch((err) => getBalanceOf(edwhale))
@@ -304,7 +304,7 @@ contract(`Sale`, (accounts) => {
       .catch((err) => { throw new Error(err); })
     );
     it(`should not transfer 1 token to James.`, () =>
-      purchaseAdToken(james, new BN(`1`, 10))
+      purchaseToken(james, new BN(`1`, 10))
       .then(() => { throw new Error(`James was able ` +
         `to purchase tokens in the emergency stop period.`); })
       .catch((err) => getBalanceOf(james))
@@ -312,7 +312,7 @@ contract(`Sale`, (accounts) => {
         `to purchase tokens in the emergency stop period.`))
     );
     it(`should not transfer 10 tokens to Miguel.`, () =>
-      purchaseAdToken(miguel, new BN(`10`, 10))
+      purchaseToken(miguel, new BN(`10`, 10))
       .then(() => { throw new Error(`Miguel was able ` +
         `to purchase tokens in the emergency stop period.`); })
       .catch((err) => getBalanceOf(miguel))
@@ -320,7 +320,7 @@ contract(`Sale`, (accounts) => {
         `to purchase tokens in the emergency stop period.`))
     );
     it(`should not transfer 100 tokens to Edwhale.`, () =>
-      purchaseAdToken(edwhale, new BN(`100`, 10))
+      purchaseToken(edwhale, new BN(`100`, 10))
       .then(() => { throw new Error(`Edwhale was able ` +
         `to purchase tokens in the emergency stop period.`); })
       .catch((err) => getBalanceOf(edwhale))
@@ -336,7 +336,7 @@ contract(`Sale`, (accounts) => {
 
   describe(`Sale period 1`, () => {
     it(`should reject a transfer of ${distros.publicSale.amount} tokens to Edwhale.`, () =>
-      purchaseAdToken(edwhale, distros.publicSale.amount)
+      purchaseToken(edwhale, distros.publicSale.amount)
       .then(() => { throw new Error(`Edwhale was able ` +
         `to purchase more tokens than should be available.`); })
       .catch((err) => getBalanceOf(edwhale))
@@ -348,7 +348,7 @@ contract(`Sale`, (accounts) => {
       return getBalanceOf(Sale.address)
       .then((balance) => {
         saleBalance = new BN(balance.toString(10), 10);
-        return purchaseAdToken(edwhale, saleBalance);
+        return purchaseToken(edwhale, saleBalance);
       })
       .then(() => getBalanceOf(edwhale))
       .then((balance) => assert.equal(balance.toString(10),
@@ -361,7 +361,7 @@ contract(`Sale`, (accounts) => {
 
   describe(`Post-sale period`, () => {
     it(`should not transfer 1 token to James.`, () =>
-      purchaseAdToken(james, new BN(`1`, 10))
+      purchaseToken(james, new BN(`1`, 10))
       .then(() => { throw new Error(`James was able ` +
         `to purchase tokens after the sale ended.`); })
       .catch((err) => getBalanceOf(james))
@@ -369,7 +369,7 @@ contract(`Sale`, (accounts) => {
         `to purchase tokens after the sale ended.`))
     );
     it(`should not transfer 10 tokens to Miguel.`, () =>
-      purchaseAdToken(miguel, new BN(`10`, 10))
+      purchaseToken(miguel, new BN(`10`, 10))
       .then(() => { throw new Error(`Miguel was able ` +
         `to purchase tokens after the sale ended.`); })
       .catch((err) => getBalanceOf(miguel))
@@ -377,7 +377,7 @@ contract(`Sale`, (accounts) => {
         `to purchase tokens after the sale ended.`))
     );
     it(`should not transfer 100 tokens to Edwhale.`, () =>
-      purchaseAdToken(edwhale, new BN(`100`, 10))
+      purchaseToken(edwhale, new BN(`100`, 10))
       .then(() => { throw new Error(`Edwhale was able ` +
         `to purchase tokens after the sale ended.`); })
       .catch((err) => getBalanceOf(edwhale))

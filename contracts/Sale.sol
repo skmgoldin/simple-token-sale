@@ -3,7 +3,7 @@ import "./StandardToken.sol";
 
 contract Sale {
 
-    event PurchasedAdToken(address purchaser, uint amount);
+    event PurchasedToken(address purchaser, uint amount);
 
     address public owner;
     address public wallet;
@@ -33,7 +33,7 @@ contract Sale {
         startBlock = _startBlock;
     }
 
-    function purchaseAdToken(uint _amount)
+    function purchaseToken(uint _amount)
         saleStarted
         payable
     {
@@ -44,7 +44,7 @@ contract Sale {
 
         if(!token.transfer(msg.sender, _amount)) { throw; }
 
-        PurchasedAdToken(msg.sender, _amount);
+        PurchasedToken(msg.sender, _amount);
     }
 
     /********************************** 
