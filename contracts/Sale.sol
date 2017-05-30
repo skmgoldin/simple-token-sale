@@ -33,18 +33,25 @@ contract Sale {
         startBlock = _startBlock;
     }
 
-    function purchaseToken(uint _amount)
+    function purchaseTokens()
         saleStarted
         payable
     {
-        if(_amount > token.balanceOf(this)) { throw; }
-        if(msg.value != (price * _amount)) { throw; }
+        uint excessAmount = msg.value % price;
+        uint purchaseAmount = msg.value - excessAmount;
+        uint tokenPurchase = purchaseAmount / price;
 
-        if(!wallet.send(msg.value)) { throw; }
+        if(tokenPurchase > token.balanceOf(this)) { throw; }
 
-        if(!token.transfer(msg.sender, _amount)) { throw; }
+        if (excessAmount > 0) {
+            msg.sender.transfer(excessAmount);
+        }
 
-        PurchasedToken(msg.sender, _amount);
+        if(!wallet.send(purchaseAmount)) { throw; }
+
+        if(!token.transfer(msg.sender, tokenPurchase)) { throw; }
+
+        PurchasedToken(msg.sender, tokenPurchase);
     }
 
     /********************************** 

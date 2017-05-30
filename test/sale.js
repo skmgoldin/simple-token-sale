@@ -20,7 +20,7 @@ contract(`Sale`, (accounts) => {
   function purchaseToken(actor, amount) {
     if(!BN.isBN(amount)) { throw new Error(`Supplied amount is not a BN.`); }
     return Sale.deployed()
-    .then((instance) => instance.purchaseToken(amount,
+    .then((instance) => instance.purchaseTokens(
       {from: actor, value: amount.mul(saleConf.price)}))
   }
 
