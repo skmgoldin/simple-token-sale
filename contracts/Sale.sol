@@ -12,12 +12,12 @@ contract Sale {
     uint public startBlock;
 
     modifier saleStarted {
-        if(block.number < startBlock && msg.sender != owner) { throw; }
+        require(block.number >= startBlock || msg.sender == owner);
         _;
     }
 
     modifier onlyOwner {
-        if(msg.sender != owner) { throw; }
+        require(msg.sender == owner);
         _;
     }
 
@@ -41,7 +41,7 @@ contract Sale {
         uint purchaseAmount = msg.value - excessAmount;
         uint tokenPurchase = purchaseAmount / price;
 
-        if(tokenPurchase > token.balanceOf(this)) { throw; }
+        require(tokenPurchase <= token.balanceOf(this));
 
         if (excessAmount > 0) {
             msg.sender.transfer(excessAmount);
@@ -49,7 +49,7 @@ contract Sale {
 
         if(!wallet.send(purchaseAmount)) { throw; }
 
-        if(!token.transfer(msg.sender, tokenPurchase)) { throw; }
+        require(token.transfer(msg.sender, tokenPurchase));
 
         PurchasedTokens(msg.sender, tokenPurchase);
     }
