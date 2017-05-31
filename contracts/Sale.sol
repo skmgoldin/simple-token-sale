@@ -47,7 +47,7 @@ contract Sale {
             msg.sender.transfer(excessAmount);
         }
 
-        if(!wallet.send(purchaseAmount)) { throw; }
+        wallet.transfer(purchaseAmount);
 
         require(token.transfer(msg.sender, tokenPurchase));
 
