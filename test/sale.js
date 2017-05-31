@@ -343,6 +343,32 @@ contract(`Sale`, (accounts) => {
       .then((balance) => assert.equal(balance.toString(10), `100`, `Edwhale was able ` +
         `to purchase more tokens than should be available.`))
     );
+    it(`should return excess Wei to Edwhale`, () => {
+      let startingBalance;
+      let gasPrice;
+      let gasUsed;
+      let totalEthDebit;
+      let expectedFinalBalance;
+      let excessEther = saleConf.price.div(new BN(`2`, 10));
+
+      return ethQuery.getBalance(edwhale)
+      .then((balance) => { return startingBalance = balance; })
+      .then(() => ethQuery.gasPrice())
+      .then((res) => { return gasPrice = res; })
+      .then(() => Sale.deployed())
+      .then((instance) => instance.purchaseTokens(
+        {from: edwhale, value: saleConf.price.add(excessEther), gasPrice: gasPrice }
+      ))
+      .then((receipt) => {
+        gasUsed = new BN(receipt.receipt.gasUsed, 10);
+        totalEthDebit = gasPrice.mul(gasUsed).add(saleConf.price);
+        return expectedFinalBalance = startingBalance.sub(totalEthDebit);
+      })
+      .then(() => ethQuery.getBalance(edwhale))
+      .then((balance) => assert.equal(balance.toString(10),
+        expectedFinalBalance.toString(10), `Edwhale's balance is wrong.`))
+      .catch((err) => { throw new Error(err); });
+    });
     it(`should transfer all the remaining tokens to Edwhale.`, () => {
       let saleBalance;
       return getBalanceOf(Sale.address)
@@ -352,11 +378,10 @@ contract(`Sale`, (accounts) => {
       })
       .then(() => getBalanceOf(edwhale))
       .then((balance) => assert.equal(balance.toString(10),
-        saleBalance.add(new BN(`100`, 10)).toString(10),
+        saleBalance.add(new BN(`101`, 10)).toString(10),
         `Edwhale was able to purchase more tokens than should be available.`))
       .catch((err) => { throw new Error(err); })
     });
-
   });
 
   describe(`Post-sale period`, () => {
