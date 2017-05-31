@@ -3,7 +3,7 @@ import "./StandardToken.sol";
 
 contract Sale {
 
-    event PurchasedToken(address purchaser, uint amount);
+    event PurchasedTokens(address purchaser, uint amount);
 
     address public owner;
     address public wallet;
@@ -51,7 +51,7 @@ contract Sale {
 
         if(!token.transfer(msg.sender, tokenPurchase)) { throw; }
 
-        PurchasedToken(msg.sender, tokenPurchase);
+        PurchasedTokens(msg.sender, tokenPurchase);
     }
 
     /********************************** 
