@@ -18,6 +18,7 @@ contract Sale {
     StandardToken public token;
     uint public price;
     uint public startBlock;
+    bool public emergencyFlag = false;
 
     /*
      * Modifiers
@@ -30,6 +31,11 @@ contract Sale {
 
     modifier onlyOwner {
         require(msg.sender == owner);
+        _;
+    }
+
+    modifier notInEmergency {
+        require(emergencyFlag == false);
         _;
     }
 
@@ -60,6 +66,7 @@ contract Sale {
     function purchaseTokens()
         saleStarted
         payable
+        notInEmergency
     {
         uint excessAmount = msg.value % price;
         uint purchaseAmount = msg.value - excessAmount;
@@ -100,9 +107,9 @@ contract Sale {
         startBlock = _newBlock;
     }
 
-    function emergencyStop()
+    function emergencyToggle()
         onlyOwner
     {
-        startBlock = (2**256) - 1;
+        emergencyFlag = !emergencyFlag;
     }
 }

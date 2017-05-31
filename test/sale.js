@@ -126,17 +126,16 @@ contract(`Sale`, (accounts) => {
       .then((owner) => assert.equal(owner.valueOf(), saleConf.owner,
         `A non-owner was able to change the sale owner`))
     );
-    it(`should not allow James to activate the emergencyStop.`, () =>
+    it(`should not allow James to activate the emergencyToggle.`, () =>
       Sale.deployed()
-      .then((instance) => instance.emergencyStop({from: james}))
+      .then((instance) => instance.emergencyToggle({from: james}))
       .then(() => {
-        throw new Error(`A non-owner was able to activate the emergencyStop`);
+        throw new Error(`A non-owner was able to activate the emergencyToggle`);
       })
       .catch((err) => Sale.deployed())
-      .then((instance) => instance.startBlock.call())
-      .then((startBlock) => assert.equal(startBlock.toString(10),
-        saleConf.startBlock.toString(10),
-        `A non-owner was able to activate the emergencyStop`))
+      .then((instance) => instance.emergencyFlag.call())
+      .then((res) => assert.equal(res.valueOf(), false,
+        `A non-owner was able to activate the emergencyToggle`))
     );
     it(`should change the owner to miguel.`, () =>
       Sale.deployed()
@@ -183,15 +182,6 @@ contract(`Sale`, (accounts) => {
       .then((startBlock) => assert.equal(startBlock.toString(10), `2666`,
         `The owner was not able to change the sale startBlock`))
     );
-    it(`should activate the emergencyStop.`, () =>
-      Sale.deployed()
-      .then((instance) => instance.emergencyStop({from: owner}))
-      .then(() => Sale.deployed())
-      .then((instance) => instance.startBlock.call())
-      .then((startBlock) => assert.equal(new BN(startBlock.toString(10), 10).toString(10),
-        new BN(`2`, 10).pow(new BN(`256`, 10)).sub(new BN(`1`, 10)).toString(10),
-        `The owner was not able to activate the emergencyStop`))
-    );
     it(`should change the startBlock to ${saleConf.startBlock}.`, () =>
       Sale.deployed()
       .then((instance) => instance.changeStartBlock(saleConf.startBlock, {from: owner}))
@@ -199,6 +189,22 @@ contract(`Sale`, (accounts) => {
       .then((instance) => instance.startBlock.call())
       .then((startBlock) => assert.equal(startBlock.toString(10), saleConf.startBlock,
         `The owner was not able to change the sale startBlock`))
+    );
+    it(`should activate the emergencyFlag.`, () =>
+      Sale.deployed()
+      .then((instance) => instance.emergencyToggle({from: owner}))
+      .then(() => Sale.deployed())
+      .then((instance) => instance.emergencyFlag.call())
+      .then((res) => assert.equal(res.valueOf(), true,
+        `The owner was not able to activate the emergencyFlag`))
+    );
+    it(`should deactivate the emergencyFlag.`, () =>
+      Sale.deployed()
+      .then((instance) => instance.emergencyToggle({from: owner}))
+      .then(() => Sale.deployed())
+      .then((instance) => instance.emergencyFlag.call())
+      .then((res) => assert.equal(res.valueOf(), false,
+        `The owner was not able to deactivate the emergencyFlag`))
     );
     it(`should change the price back to ${saleConf.price}.`, () =>
       Sale.deployed()
@@ -300,7 +306,7 @@ contract(`Sale`, (accounts) => {
   describe(`Emergency stop`, () => {
     before(() =>
       Sale.deployed()
-      .then((instance) => instance.emergencyStop({from: owner}))
+      .then((instance) => instance.emergencyToggle({from: owner}))
       .catch((err) => { throw new Error(err); })
     );
     it(`should not transfer 1 token to James.`, () =>
@@ -329,7 +335,7 @@ contract(`Sale`, (accounts) => {
     );
     after(() =>
       Sale.deployed()
-      .then((instance) => instance.changeStartBlock(saleConf.startBlock, {from: owner}))
+      .then((instance) => instance.emergencyToggle({ from: owner }))
       .catch((err) => { throw new Error(err); })
     );
   });
