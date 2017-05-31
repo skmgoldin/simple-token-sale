@@ -22,6 +22,7 @@ module.exports = function(deployer, network, accounts) {
       saleConf.wallet,
       Token.address,
       saleConf.price,
-      saleConf.startBlock
+      saleConf.startBlock,
+      saleConf.freezeBlock
     );
 };

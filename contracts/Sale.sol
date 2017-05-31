@@ -18,6 +18,7 @@ contract Sale {
     StandardToken public token;
     uint public price;
     uint public startBlock;
+    uint public freezeBlock;
     bool public emergencyFlag = false;
 
     /*
@@ -31,6 +32,11 @@ contract Sale {
 
     modifier onlyOwner {
         require(msg.sender == owner);
+        _;
+    }
+
+    modifier notFrozen {
+        require(block.number < freezeBlock);
         _;
     }
 
@@ -53,12 +59,14 @@ contract Sale {
                   address _wallet,
                   StandardToken _token,
                   uint _price,
-                  uint _startBlock) {
+                  uint _startBlock,
+                  uint _freezeBlock) {
         owner = _owner;
         wallet = _wallet;
         token = StandardToken(_token);
         price = _price;
         startBlock = _startBlock;
+        freezeBlock = _freezeBlock;
     }
 
     /// @dev purchaseToken(): function that exchanges ETH for ADT (main sale function)
@@ -97,12 +105,14 @@ contract Sale {
 
     function changePrice(uint _newPrice)
         onlyOwner
+        notFrozen
     {
         price = _newPrice;
     }
 
     function changeStartBlock(uint _newBlock)
         onlyOwner
+        notFrozen
     {
         startBlock = _newBlock;
     }
