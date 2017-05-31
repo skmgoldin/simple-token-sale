@@ -3,13 +3,25 @@ import "./StandardToken.sol";
 
 contract Sale {
 
+    /*
+     * Events
+     */
+
     event PurchasedTokens(address purchaser, uint amount);
+
+    /*
+     * Storage
+     */
 
     address public owner;
     address public wallet;
     StandardToken public token;
     uint public price;
     uint public startBlock;
+
+    /*
+     * Modifiers
+     */
 
     modifier saleStarted {
         require(block.number >= startBlock || msg.sender == owner);
@@ -21,6 +33,16 @@ contract Sale {
         _;
     }
 
+    /*
+     * Public functions
+     */
+
+    /// @dev Sale(): constructor for Sale contract
+    /// @param _owner the address which owns the sale, can access owner-only functions
+    /// @param _wallet the sale's beneficiary address 
+    /// @param _token the address of the ERC20 token being sold
+    /// @param _price price of the token in Wei (ADT/Wei pair price)
+    /// @param _startBlock the block at which this contract will begin selling its ADT balance
     function Sale(address _owner,
                   address _wallet,
                   StandardToken _token,
@@ -33,6 +55,8 @@ contract Sale {
         startBlock = _startBlock;
     }
 
+    /// @dev purchaseToken(): function that exchanges ETH for ADT (main sale function)
+    /// @notice You're about to purchase the equivalent of `msg.value` Wei in ADT tokens
     function purchaseTokens()
         saleStarted
         payable
@@ -54,9 +78,9 @@ contract Sale {
         PurchasedTokens(msg.sender, tokenPurchase);
     }
 
-    /********************************** 
-     ** Owner-only utility functions **
-     **********************************/
+    /*
+     * Owner-only functions
+     */
 
     function changeOwner(address _newOwner)
         onlyOwner
