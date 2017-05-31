@@ -260,6 +260,16 @@ contract(`Sale`, (accounts) => {
       return forceMine(saleConf.startBlock);
     });
 
+    it(`should not allow the owner to change the price`, () =>
+      Sale.deployed()
+      .then((instance) => instance.changePrice(new BN(`420`, 10)))
+      .then(() => { throw new Error(`The owner was able to change the price after ` +
+        `the freeze block.`); })
+      .catch(() => Sale.deployed())
+      .then((instance) => instance.price.call())
+      .then((res) => assert.equal(res.toString(10), saleConf.price.toString(10),
+        `The owner was able to change the price after the freeze block.`))
+    );
     it(`should transfer 1 token to James.`, () => {
       purchaseToken(james, new BN(`1`, 10))
       .then(() => getBalanceOf(james))
