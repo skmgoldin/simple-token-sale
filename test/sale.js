@@ -358,9 +358,9 @@ contract(`Sale`, (accounts) => {
       let excessEther = saleConf.price.div(new BN(`2`, 10));
 
       return ethQuery.getBalance(edwhale)
-      .then((balance) => { return startingBalance = balance; })
+      .then((balance) => { startingBalance = balance; })
       .then(() => ethQuery.gasPrice())
-      .then((res) => { return gasPrice = res; })
+      .then((res) => { gasPrice = res; })
       .then(() => Sale.deployed())
       .then((instance) => instance.purchaseTokens(
         {from: edwhale, value: saleConf.price.add(excessEther), gasPrice: gasPrice }
@@ -368,7 +368,7 @@ contract(`Sale`, (accounts) => {
       .then((receipt) => {
         gasUsed = new BN(receipt.receipt.gasUsed, 10);
         totalEthDebit = gasPrice.mul(gasUsed).add(saleConf.price);
-        return expectedFinalBalance = startingBalance.sub(totalEthDebit);
+        expectedFinalBalance = startingBalance.sub(totalEthDebit);
       })
       .then(() => ethQuery.getBalance(edwhale))
       .then((balance) => assert.equal(balance.toString(10),
