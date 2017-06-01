@@ -1,5 +1,5 @@
 pragma solidity 0.4.11;
-import "./StandardToken.sol";
+import "./HumanStandardToken.sol";
 
 contract Sale {
 
@@ -15,7 +15,7 @@ contract Sale {
 
     address public owner;
     address public wallet;
-    StandardToken public token;
+    HumanStandardToken public token;
     uint public price;
     uint public startBlock;
     uint public freezeBlock;
@@ -52,21 +52,39 @@ contract Sale {
     /// @dev Sale(): constructor for Sale contract
     /// @param _owner the address which owns the sale, can access owner-only functions
     /// @param _wallet the sale's beneficiary address 
-    /// @param _token the address of the ERC20 token being sold
+    /// @param _tokenSupply the total number of AdToken to mint
+    /// @param _tokenName AdToken's human-readable name
+    /// @param _tokenDecimals the number of display decimals in AdToken balances
+    /// @param _tokenSymbol AdToken's human-readable asset symbol
     /// @param _price price of the token in Wei (ADT/Wei pair price)
     /// @param _startBlock the block at which this contract will begin selling its ADT balance
+    /// @param _founders addresses of founders to receive initial token balances
+    /// @param _foundersTokens amounts of tokens to transfer to founders
     function Sale(address _owner,
                   address _wallet,
-                  StandardToken _token,
+                  uint256 _tokenSupply,
+                  string _tokenName,
+                  uint8 _tokenDecimals,
+                  string _tokenSymbol,
                   uint _price,
                   uint _startBlock,
-                  uint _freezeBlock) {
+                  uint _freezeBlock,
+                  address[] _founders,
+                  uint[] _foundersTokens) {
         owner = _owner;
         wallet = _wallet;
-        token = StandardToken(_token);
+        token = new HumanStandardToken(_tokenSupply, _tokenName, _tokenDecimals, _tokenSymbol);
         price = _price;
         startBlock = _startBlock;
         freezeBlock = _freezeBlock;
+
+        token.transfer(this, token.totalSupply());
+        if (token.balanceOf(this) != token.totalSupply()) throw;
+        if (token.balanceOf(this) != 10**9) throw;
+
+        for(uint i = 0; i < _founders.length; i++) {
+            token.transfer(_founders[i], _foundersTokens[i]);
+        }
     }
 
     /// @dev purchaseToken(): function that exchanges ETH for ADT (main sale function)
