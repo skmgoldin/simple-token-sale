@@ -7,7 +7,7 @@ contract Sale {
      * Events
      */
 
-    event PurchasedTokens(address purchaser, uint amount);
+    event PurchasedTokens(address indexed purchaser, uint amount);
 
     /*
      * Storage
