@@ -4,35 +4,35 @@ const Token = artifacts.require(`./HumanStandardToken.sol`);
 const fs = require(`fs`);
 const BN = require(`bn.js`);
 const HttpProvider = require(`ethjs-provider-http`);
-const EthRPC = require('ethjs-rpc');
-const EthQuery = require('ethjs-query');
-const ethRPC = new EthRPC(new HttpProvider('http://localhost:8545'));
-const ethQuery = new EthQuery(new HttpProvider('http://localhost:8545'));
+const EthRPC = require(`ethjs-rpc`);
+const EthQuery = require(`ethjs-query`);
+const ethRPC = new EthRPC(new HttpProvider(`http://localhost:8545`));
+const ethQuery = new EthQuery(new HttpProvider(`http://localhost:8545`));
 
 contract(`Sale`, (accounts) => {
   const saleConf = JSON.parse(fs.readFileSync(`./conf/sale.json`));
   const distros = JSON.parse(fs.readFileSync(`./conf/distros.json`));
-  const [owner, wallet, james, miguel, edwhale] = accounts;
+  const [owner, james, miguel, edwhale] = accounts;
 
   /*
    * Utility Functions
    */
   function purchaseToken(actor, amount) {
-    if(!BN.isBN(amount)) { throw new Error(`Supplied amount is not a BN.`); }
+    if (!BN.isBN(amount)) { throw new Error(`Supplied amount is not a BN.`); }
     return Sale.deployed()
     .then((instance) => instance.purchaseTokens(
-      {from: actor, value: amount.mul(saleConf.price)}))
+      {from: actor, value: amount.mul(saleConf.price)}));
   }
 
   function getBalanceOf(actor) {
     return Token.deployed()
     .then((instance) => instance.balanceOf.call(actor))
-    .then((balance) =>  { return new BN(balance.valueOf(), 10); })
+    .then((balance) => new BN(balance.valueOf(), 10));
   }
 
   // Convert strings in conf files to BNs
   before(() => {
-    for(recipient in distros) {
+    for (recipient in distros) {
       distros[recipient].amount = new BN(distros[recipient].amount, 10);
     }
     saleConf.price = new BN(saleConf.price, 10);
@@ -40,13 +40,24 @@ contract(`Sale`, (accounts) => {
   });
 
   describe(`Initial token issuance`, () => {
-    for(recipient in distros) {
-      it(`should instantiate ${recipient} with ${distros[recipient].amount} tokens.`, () =>
-        Token.deployed()
-        .then((instance) => instance.balanceOf.call(distros[recipient].address))
-        .then((balance) => assert.equal(balance.valueOf(), distros[recipient].amount))
-      );
-    }
+
+    it(`should instantiate founders with the proper number of tokens.`, () =>
+      Promise.all(
+        Object.keys(distros).map((curr, i, arr) => {
+          if(curr === `publicSale`) {
+            return null;
+          }
+          return Token.deployed()
+          .then((instance) =>
+            instance.balanceOf.call(distros[curr].address)
+          )
+          .then((balance) =>
+            assert.equal(balance.toString(`10`), distros[curr].amount.toString(10))
+          )
+          .catch((err) => { throw new Error(err); })
+        })
+      )
+    );
     // Sanity check
     it(`should instantiate the public sale with ${distros.publicSale.amount} tokens. ` +
       `(This is a sanity check.).`, () =>
@@ -95,7 +106,7 @@ contract(`Sale`, (accounts) => {
       Sale.deployed()
       .then((instance) => instance.changePrice(saleConf.price + 1, {from: james}))
       .then(() => {
-        throw new Error(`A non-owner was able to change the sale price`); 
+        throw new Error(`A non-owner was able to change the sale price`);
       })
       .catch((err) => Sale.deployed())
       .then((instance) => instance.price.call())
@@ -107,7 +118,7 @@ contract(`Sale`, (accounts) => {
       .then((instance) => instance.changeStartBlock(saleConf.startBlock.add(1),
         {from: james}))
       .then(() => {
-        throw new Error(`A non-owner was able to change the sale startBlock`); 
+        throw new Error(`A non-owner was able to change the sale startBlock`);
       })
       .catch((err) => Sale.deployed())
       .then((instance) => instance.startBlock.call())
@@ -219,19 +230,21 @@ contract(`Sale`, (accounts) => {
   describe(`Pre-sale period`, () => {
     it(`should reject a purchase from James.`, () =>
       purchaseToken(james, new BN(`420`, 10))
-      .then(() => { throw new Error(`James was able to purchase tokens when he ` +
-        `should not have been able to.`); })
+      .then(() => {
+        throw new Error(`James was able to purchase tokens when he ` +
+        `should not have been able to.`);
+      })
       .catch((err) => getBalanceOf(james))
       .then((balance) => assert.equal(balance.toString(10), `0`, `James was able ` +
         `to purchase tokens in the pre-sale period.`))
     );
-    it(`should allow owner to purchase 1 token`, () =>       
+    it(`should allow owner to purchase 1 token`, () =>
       purchaseToken(owner, new BN(`1`, 10))
       .then(() => getBalanceOf(owner))
       .then((balance) => assert.equal(balance.toString(10), `1`, `Owner was not able ` +
         `to purchase tokens in the pre-sale period.`))
-      .catch((err) => { 
-        throw new Error(err); 
+      .catch((err) => {
+        throw new Error(err);
       })
     );
   });
@@ -239,22 +252,22 @@ contract(`Sale`, (accounts) => {
   describe(`Sale period 0`, () => {
     before(() => {
       function forceMine(blockToMine) {
-        if(!BN.isBN(blockToMine)) {
+        if (!BN.isBN(blockToMine)) {
           throw new Error(`Supplied block number must be a BN.`);
         }
         return new Promise((resolve, reject) =>
           ethQuery.blockNumber()
           .then((blockNumber) => {
-            if(new BN(blockNumber, 10).lt(blockToMine)) {
+            if (new BN(blockNumber, 10).lt(blockToMine)) {
               ethRPC.sendAsync({method: `evm_mine`}, (err) => {
-                if(err !== undefined && err !== null) { reject(err); }
+                if (err !== undefined && err !== null) { reject(err); }
                 resolve(forceMine(blockToMine));
               });
             } else {
               resolve();
             }
           })
-        )
+        );
       }
 
       return forceMine(saleConf.startBlock);
@@ -263,8 +276,10 @@ contract(`Sale`, (accounts) => {
     it(`should not allow the owner to change the price`, () =>
       Sale.deployed()
       .then((instance) => instance.changePrice(new BN(`420`, 10)))
-      .then(() => { throw new Error(`The owner was able to change the price after ` +
-        `the freeze block.`); })
+      .then(() => {
+        throw new Error(`The owner was able to change the price after ` +
+        `the freeze block.`);
+      })
       .catch(() => Sale.deployed())
       .then((instance) => instance.price.call())
       .then((res) => assert.equal(res.toString(10), saleConf.price.toString(10),
@@ -275,7 +290,7 @@ contract(`Sale`, (accounts) => {
       .then(() => getBalanceOf(james))
       .then((balance) => assert.equal(balance.toString(10), `1`, `James was not able ` +
         `to purchase tokens in the sale period.`))
-      .catch((err) => { throw new Error(err); })
+      .catch((err) => { throw new Error(err); });
     });
     it(`should transfer 10 tokens to Miguel.`, () =>
       purchaseToken(miguel, new BN(`10`, 10))
@@ -321,31 +336,37 @@ contract(`Sale`, (accounts) => {
     );
     it(`should not transfer 1 token to James.`, () =>
       purchaseToken(james, new BN(`1`, 10))
-      .then(() => { throw new Error(`James was able ` +
-        `to purchase tokens in the emergency stop period.`); })
+      .then(() => {
+        throw new Error(`James was able ` +
+        `to purchase tokens in the emergency stop period.`);
+      })
       .catch((err) => getBalanceOf(james))
       .then((balance) => assert.equal(balance.toString(10), `1`, `James was able ` +
         `to purchase tokens in the emergency stop period.`))
     );
     it(`should not transfer 10 tokens to Miguel.`, () =>
       purchaseToken(miguel, new BN(`10`, 10))
-      .then(() => { throw new Error(`Miguel was able ` +
-        `to purchase tokens in the emergency stop period.`); })
+      .then(() => {
+        throw new Error(`Miguel was able ` +
+        `to purchase tokens in the emergency stop period.`);
+      })
       .catch((err) => getBalanceOf(miguel))
       .then((balance) => assert.equal(balance.toString(10), `10`, `Miguel was able ` +
         `to purchase tokens in the emergency stop period.`))
     );
     it(`should not transfer 100 tokens to Edwhale.`, () =>
       purchaseToken(edwhale, new BN(`100`, 10))
-      .then(() => { throw new Error(`Edwhale was able ` +
-        `to purchase tokens in the emergency stop period.`); })
+      .then(() => {
+        throw new Error(`Edwhale was able ` +
+        `to purchase tokens in the emergency stop period.`);
+      })
       .catch((err) => getBalanceOf(edwhale))
       .then((balance) => assert.equal(balance.toString(10), `100`, `Edwhale was able ` +
         `to purchase tokens in the emergency stop period.`))
     );
     after(() =>
       Sale.deployed()
-      .then((instance) => instance.emergencyToggle({ from: owner }))
+      .then((instance) => instance.emergencyToggle({from: owner}))
       .catch((err) => { throw new Error(err); })
     );
   });
@@ -353,8 +374,10 @@ contract(`Sale`, (accounts) => {
   describe(`Sale period 1`, () => {
     it(`should reject a transfer of ${distros.publicSale.amount} tokens to Edwhale.`, () =>
       purchaseToken(edwhale, distros.publicSale.amount)
-      .then(() => { throw new Error(`Edwhale was able ` +
-        `to purchase more tokens than should be available.`); })
+      .then(() => {
+        throw new Error(`Edwhale was able ` +
+        `to purchase more tokens than should be available.`);
+      })
       .catch((err) => getBalanceOf(edwhale))
       .then((balance) => assert.equal(balance.toString(10), `100`, `Edwhale was able ` +
         `to purchase more tokens than should be available.`))
@@ -365,7 +388,7 @@ contract(`Sale`, (accounts) => {
       let gasUsed;
       let totalEthDebit;
       let expectedFinalBalance;
-      let excessEther = saleConf.price.div(new BN(`2`, 10));
+      const excessEther = saleConf.price.div(new BN(`2`, 10));
 
       return ethQuery.getBalance(edwhale)
       .then((balance) => { startingBalance = balance; })
@@ -373,7 +396,7 @@ contract(`Sale`, (accounts) => {
       .then((res) => { gasPrice = res; })
       .then(() => Sale.deployed())
       .then((instance) => instance.purchaseTokens(
-        {from: edwhale, value: saleConf.price.add(excessEther), gasPrice: gasPrice }
+        {from: edwhale, value: saleConf.price.add(excessEther), gasPrice}
       ))
       .then((receipt) => {
         gasUsed = new BN(receipt.receipt.gasUsed, 10);
@@ -396,31 +419,37 @@ contract(`Sale`, (accounts) => {
       .then((balance) => assert.equal(balance.toString(10),
         saleBalance.add(new BN(`101`, 10)).toString(10),
         `Edwhale was able to purchase more tokens than should be available.`))
-      .catch((err) => { throw new Error(err); })
+      .catch((err) => { throw new Error(err); });
     });
   });
 
   describe(`Post-sale period`, () => {
     it(`should not transfer 1 token to James.`, () =>
       purchaseToken(james, new BN(`1`, 10))
-      .then(() => { throw new Error(`James was able ` +
-        `to purchase tokens after the sale ended.`); })
+      .then(() => {
+        throw new Error(`James was able ` +
+        `to purchase tokens after the sale ended.`);
+      })
       .catch((err) => getBalanceOf(james))
       .then((balance) => assert.equal(balance.toString(10), 1, `James was able ` +
         `to purchase tokens after the sale ended.`))
     );
     it(`should not transfer 10 tokens to Miguel.`, () =>
       purchaseToken(miguel, new BN(`10`, 10))
-      .then(() => { throw new Error(`Miguel was able ` +
-        `to purchase tokens after the sale ended.`); })
+      .then(() => {
+        throw new Error(`Miguel was able ` +
+        `to purchase tokens after the sale ended.`);
+      })
       .catch((err) => getBalanceOf(miguel))
       .then((balance) => assert.equal(balance.toString(10), `10`, `Miguel was able ` +
         `to purchase tokens after the sale ended.`))
     );
     it(`should not transfer 100 tokens to Edwhale.`, () =>
       purchaseToken(edwhale, new BN(`100`, 10))
-      .then(() => { throw new Error(`Edwhale was able ` +
-        `to purchase tokens after the sale ended.`); })
+      .then(() => {
+        throw new Error(`Edwhale was able ` +
+        `to purchase tokens after the sale ended.`);
+      })
       .catch((err) => getBalanceOf(edwhale))
       .then((balance) => assert.equal(balance.toString(10),
         new BN(distros.publicSale.amount, 10).sub(new BN(`12`, 10)).toString(10),
