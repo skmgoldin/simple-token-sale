@@ -1,6 +1,6 @@
 /*global web3 describe before artifacts assert it contract:true*/
 const Sale = artifacts.require(`./Sale.sol`);
-const Token = artifacts.require(`./HumanStandardToken.sol`);
+const HumanStandardToken = artifacts.require(`./HumanStandardToken.sol`);
 const fs = require(`fs`);
 const BN = require(`bn.js`);
 const HttpProvider = require(`ethjs-provider-http`);
@@ -25,19 +25,21 @@ contract(`Sale`, (accounts) => {
   }
 
   function getBalanceOf(actor) {
-    return Token.deployed()
+    return Sale.deployed()
+    .then((instance) => instance.token.call())
+    .then((tokenAddr) => HumanStandardToken.at(tokenAddr))
     .then((instance) => instance.balanceOf.call(actor))
-    .then((balance) => new BN(balance.valueOf(), 10));
+    .then((balance) => new BN(balance.valueOf(), 10))
+    .catch((err) => { throw new Error(err); });
   }
 
-  // Convert strings in conf files to BNs
   before(() => {
     for (recipient in distros) {
       distros[recipient].amount = new BN(distros[recipient].amount, 10);
     }
     saleConf.price = new BN(saleConf.price, 10);
     saleConf.startBlock = new BN(saleConf.startBlock, 10);
-  });
+ });
 
   describe(`Initial token issuance`, () => {
 
@@ -47,10 +49,13 @@ contract(`Sale`, (accounts) => {
           if(curr === `publicSale`) {
             return null;
           }
+          /*
           return Token.deployed()
           .then((instance) =>
             instance.balanceOf.call(distros[curr].address)
           )
+          */
+          return getBalanceOf(distros[curr].address)
           .then((balance) =>
             assert.equal(balance.toString(`10`), distros[curr].amount.toString(10))
           )
@@ -59,11 +64,12 @@ contract(`Sale`, (accounts) => {
       )
     );
     // Sanity check
-    it(`should instantiate the public sale with ${distros.publicSale.amount} tokens. ` +
+    it(`should instantiate the public sale with ${500000000} tokens. ` +
       `(This is a sanity check.).`, () =>
-      Token.deployed()
-      .then((instance) => instance.balanceOf.call(Sale.address))
-      .then((balance) => assert.equal(balance.valueOf(), distros.publicSale.amount,
+      //Token.deployed()
+      //.then((instance) => instance.balanceOf.call(Sale.address))
+      getBalanceOf(Sale.address)
+      .then((balance) => assert.equal(balance.valueOf(), 500000000,
         `The sale contract was not given the correct number of tokens to sell`))
     );
   });
@@ -93,12 +99,14 @@ contract(`Sale`, (accounts) => {
         saleConf.startBlock.toString(10),
         `The startBlock was not instantiated properly.`))
     );
+    /*
     it(`should instantiate with the token set to ${Token.address}.`, () =>
       Sale.deployed()
       .then((instance) => instance.token.call())
       .then((token) => assert.equal(token.valueOf(), Token.address,
         `The token was not instantiated properly`))
     );
+    */
   });
 
   describe(`Owner-only functions`, () => {
@@ -372,8 +380,8 @@ contract(`Sale`, (accounts) => {
   });
 
   describe(`Sale period 1`, () => {
-    it(`should reject a transfer of ${distros.publicSale.amount} tokens to Edwhale.`, () =>
-      purchaseToken(edwhale, distros.publicSale.amount)
+    it(`should reject a transfer of ${500000000} tokens to Edwhale.`, () =>
+      purchaseToken(edwhale, 500000000)
       .then(() => {
         throw new Error(`Edwhale was able ` +
         `to purchase more tokens than should be available.`);
@@ -452,15 +460,15 @@ contract(`Sale`, (accounts) => {
       })
       .catch((err) => getBalanceOf(edwhale))
       .then((balance) => assert.equal(balance.toString(10),
-        new BN(distros.publicSale.amount, 10).sub(new BN(`12`, 10)).toString(10),
+        new BN(500000000, 10).sub(new BN(`12`, 10)).toString(10),
         `Edwhale was able to purchase tokens after the sale ended.`))
     );
     it(`should report ` +
-      `${new BN(distros.publicSale.amount, 10).mul(new BN(saleConf.price, 10)).toString(10)} ` +
+      `${new BN(500000000, 10).mul(new BN(saleConf.price, 10)).toString(10)} ` +
       `Wei in the wallet.`, () =>
       ethQuery.getBalance(saleConf.wallet)
       .then((balance) => assert.equal(balance.toString(10),
-        new BN(distros.publicSale.amount, 10).mul(new BN(saleConf.price, 10)).toString(10),
+        new BN(500000000, 10).mul(new BN(saleConf.price, 10)).toString(10),
         `The amount of Ether in the wallet is not what it should be at sale end`))
     );
     it(`should report a zero balance for the sale contract.`, () =>
@@ -469,7 +477,10 @@ contract(`Sale`, (accounts) => {
         `ended with tokens still in the sale contract`))
     );
     it(`should allow Edwhale to transfer 10 tokens to James.`, () =>
-      Token.deployed()
+      //Token.deployed()
+      Sale.deployed()
+      .then((instance) => instance.token.call())
+      .then((tokenAddr) => HumanStandardToken.at(tokenAddr))
       .then((instance) => instance.transfer(james, `10`, {from: edwhale}))
       .then(() => getBalanceOf(james))
       .then((balance) => assert.equal(balance.toString(10), `11`,
