@@ -57,7 +57,7 @@ contract(`Sale`, (accounts) => {
           */
           return getBalanceOf(distros[curr].address)
           .then((balance) =>
-            assert.equal(balance.toString(`10`), distros[curr].amount.toString(10))
+            assert.equal(balance.toString(10), distros[curr].amount.toString(10))
           )
           .catch((err) => { throw new Error(err); })
         })
@@ -380,8 +380,8 @@ contract(`Sale`, (accounts) => {
   });
 
   describe(`Sale period 1`, () => {
-    it(`should reject a transfer of ${500000000} tokens to Edwhale.`, () =>
-      purchaseToken(edwhale, 500000000)
+    it(`should reject a transfer of 500000000 tokens to Edwhale.`, () =>
+      purchaseToken(edwhale, new BN(`500000000`, 10))
       .then(() => {
         throw new Error(`Edwhale was able ` +
         `to purchase more tokens than should be available.`);
