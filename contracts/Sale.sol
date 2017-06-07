@@ -1,5 +1,6 @@
 pragma solidity 0.4.11;
 import "./HumanStandardToken.sol";
+import "./Disbursement.sol";
 
 contract Sale {
 
@@ -8,6 +9,12 @@ contract Sale {
      */
 
     event PurchasedTokens(address indexed purchaser, uint amount);
+    event TransferredFoundersReward(address indexed founder, uint amount);
+    event TransferredTimelockedTokens(
+        address indexed timelockRecipient,
+        Disbursement vault,
+        uint amount
+    );
 
     /*
      * Storage
@@ -70,7 +77,10 @@ contract Sale {
                   uint _startBlock,
                   uint _freezeBlock,
                   address[] _founders,
-                  uint[] _foundersTokens) {
+                  uint[] _foundersTokens,
+                  address[] _timelockRecipients,
+                  uint[] _timelockTokens,
+                  uint[] _timelockDates) {
         owner = _owner;
         wallet = _wallet;
         token = new HumanStandardToken(_tokenSupply, _tokenName, _tokenDecimals, _tokenSymbol);
@@ -83,6 +93,8 @@ contract Sale {
         if (token.balanceOf(this) != 10**9) throw;
 
         distributeFoundersRewards(_founders, _foundersTokens);
+
+        distributeTimelockedRewards(_timelockRecipients, _timelockTokens, _timelockDates);
     }
 
     function distributeFoundersRewards(address[] _founders, uint[] _foundersTokens) 
@@ -92,6 +104,23 @@ contract Sale {
             token.transfer(_founders[i], _foundersTokens[i]);
             TransferredFoundersReward(_founders[i], _foundersTokens[i]);
         }
+
+    }
+
+    function distributeTimelockedRewards(
+        address[] _timelockRecipients,
+        uint[] _timelockTokens,
+        uint[] _timelockDates) 
+        private
+    { 
+        for(uint i = 0; i < _timelockRecipients.length; i++) {
+            Disbursement vault = new Disbursement(_timelockRecipients[i], 0, _timelockDates[i]);
+            token.transfer(vault, _timelockTokens[i]);
+            TransferredTimelockedTokens(_timelockRecipients[i],
+                                        Disbursement(vault),
+                                        _timelockTokens[i]);
+        }
+
     }
 
     /// @dev purchaseToken(): function that exchanges ETH for ADT (main sale function)
