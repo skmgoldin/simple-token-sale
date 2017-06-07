@@ -11,7 +11,6 @@ contract Disbursement {
      */
     address public owner;
     address public receiver;
-    address public wallet;
     uint public disbursementPeriod;
     uint public startDate;
     uint public withdrawnTokens;
@@ -34,13 +33,6 @@ contract Disbursement {
         _;
     }
 
-    modifier isWallet() {
-        if (msg.sender != wallet)
-            // Only wallet is allowed to proceed
-            revert();
-        _;
-    }
-
     modifier isSetUp() {
         if (address(token) == 0)
             // Contract is not set up
@@ -51,20 +43,18 @@ contract Disbursement {
     /*
      *  Public functions
      */
-    /// @dev Constructor function sets contract owner and wallet address, which is allowed to withdraw all tokens anytime
+    /// @dev Constructor function sets contract owner
     /// @param _receiver Receiver of vested tokens
-    /// @param _wallet Gnosis multisig wallet address
     /// @param _disbursementPeriod Vesting period in seconds
     /// @param _startDate Start date of disbursement period (cliff)
-    function Disbursement(address _receiver, address _wallet, uint _disbursementPeriod, uint _startDate)
+    function Disbursement(address _receiver, uint _disbursementPeriod, uint _startDate)
         public
     {
-        if (_receiver == 0 || _wallet == 0 || _disbursementPeriod == 0)
+        if (_receiver == 0 || _disbursementPeriod == 0)
             // Arguments are null
             revert();
         owner = msg.sender;
         receiver = _receiver;
-        wallet = _wallet;
         disbursementPeriod = _disbursementPeriod;
         startDate = _startDate;
         if (startDate == 0)
@@ -96,17 +86,6 @@ contract Disbursement {
             revert();
         withdrawnTokens += _value;
         token.transfer(_to, _value);
-    }
-
-    /// @dev Transfers all tokens to multisig wallet
-    function walletWithdraw()
-        public
-        isWallet
-        isSetUp
-    {
-        uint balance = token.balanceOf(this);
-        withdrawnTokens += balance;
-        token.transfer(wallet, balance);
     }
 
     /// @dev Calculates the maximum amount of vested tokens
