@@ -97,6 +97,9 @@ contract Sale {
         distributeTimelockedRewards(_timelockRecipients, _timelockTokens, _timelockDates);
     }
 
+    /// @dev distributeFoundersRewards(): private utility function called by constructor
+    /// @param _founders an array of addresses to which awards will be distributed
+    /// @param _foundersTokens an array of integers specifying founders rewards
     function distributeFoundersRewards(address[] _founders, uint[] _foundersTokens) 
         private
     { 
@@ -107,6 +110,10 @@ contract Sale {
 
     }
 
+    /// @dev distributeTimelockedRewards(): private utility function called by constructor
+    /// @param _timelockRecipients an array of addresses specifying disbursement beneficiaries
+    /// @param _timelockTokens an array of integers specifying disbursement amounts
+    /// @param _timelockDates an array of UNIX timestamps specifying vesting dates
     function distributeTimelockedRewards(
         address[] _timelockRecipients,
         uint[] _timelockTokens,
