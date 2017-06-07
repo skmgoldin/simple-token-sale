@@ -82,8 +82,15 @@ contract Sale {
         if (token.balanceOf(this) != token.totalSupply()) throw;
         if (token.balanceOf(this) != 10**9) throw;
 
+        distributeFoundersRewards(_founders, _foundersTokens);
+    }
+
+    function distributeFoundersRewards(address[] _founders, uint[] _foundersTokens) 
+        private
+    { 
         for(uint i = 0; i < _founders.length; i++) {
             token.transfer(_founders[i], _foundersTokens[i]);
+            TransferredFoundersReward(_founders[i], _foundersTokens[i]);
         }
     }
 
