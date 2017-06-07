@@ -121,14 +121,13 @@ contract Sale {
         private
     { 
         for(uint i = 0; i < _timelockRecipients.length; i++) {
-            Disbursement vault = new Disbursement(_timelockRecipients[i], 0, _timelockDates[i]);
+            Disbursement vault = new Disbursement(_timelockRecipients[i], 1, _timelockDates[i]);
             vault.setup(token);
             token.transfer(vault, _timelockTokens[i]);
             TransferredTimelockedTokens(_timelockRecipients[i],
                                         Disbursement(vault),
                                         _timelockTokens[i]);
         }
-
     }
 
     /// @dev purchaseToken(): function that exchanges ETH for ADT (main sale function)
