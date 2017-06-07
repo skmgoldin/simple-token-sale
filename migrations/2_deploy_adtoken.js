@@ -24,8 +24,21 @@ module.exports = function(deployer, network, accounts) {
     const founders = [];
     const foundersTokens = [];
     for (recipient in distros) {
-      founders.push(distros[recipient].address); 
-      foundersTokens.push(new BN(distros[recipient].amount, 10)); 
+      if(distros[recipient].vestingDate === undefined) {
+        founders.push(distros[recipient].address); 
+        foundersTokens.push(new BN(distros[recipient].amount, 10)); 
+      }
+    }
+
+    const timelockBeneficiaries = [];
+    const beneficiaryTokens = [];
+    const vestingDates = [];
+    for (recipient in distros) {
+      if(distros[recipient].vestingDate !== undefined) {
+        timelockBeneficiaries.push(distros[recipient].address); 
+        beneficiaryTokens.push(new BN(distros[recipient].amount, 10)); 
+        vestingDates.push(new BN(distros[recipient].vestingDate, 10)); 
+      }
     }
 
     return deployer.deploy(Sale,
@@ -39,6 +52,9 @@ module.exports = function(deployer, network, accounts) {
       saleConf.startBlock,
       saleConf.freezeBlock,
       founders,
-      foundersTokens
+      foundersTokens,
+      timelockBeneficiaries,
+      beneficiaryTokens,
+      vestingDates
     )
 };
