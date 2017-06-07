@@ -122,6 +122,7 @@ contract Sale {
     { 
         for(uint i = 0; i < _timelockRecipients.length; i++) {
             Disbursement vault = new Disbursement(_timelockRecipients[i], 0, _timelockDates[i]);
+            vault.setup(token);
             token.transfer(vault, _timelockTokens[i]);
             TransferredTimelockedTokens(_timelockRecipients[i],
                                         Disbursement(vault),
