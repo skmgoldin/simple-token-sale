@@ -1,3 +1,4 @@
+pragma solidity 0.4.11;
 import "./Token.sol";
 // NOTE: ORIGINALLY THIS WAS "TOKENS/ABSTRACTTOKEN.SOL"... CHECK THAT
 
