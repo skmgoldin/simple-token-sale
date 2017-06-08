@@ -14,10 +14,15 @@ module.exports = function(deployer, network, accounts) {
       saleConf.wallet = `0x000000000000000000000000000000000000dead`;
       saleConf.prod = false;
       fs.writeFileSync(`./conf/sale.json`, JSON.stringify(saleConf, null, `  `));
+
+      foundersConf.founders.consensys.address = accounts[10];
+      foundersConf.founders.metax.address = accounts[11];
+      foundersConf.prod = false;
+      fs.writeFileSync(`./conf/founders.json`, JSON.stringify(foundersConf, null, `  `));
     }
 
     if(network === `mainnet`) {
-      if(saleConf.prod !== true) {
+      if(saleConf.prod === false || foundersConf.prod === false) {
         throw new Error(`Sale conf file has prod flag set to false.`);
       }
     }
