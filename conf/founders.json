@@ -1,16 +1,17 @@
 {
   "vestingDates": {
-    "0": "1529971200",
-    "1": "1545696000"
+    "first": "1529971200",
+    "second": "1545696000"
   },
   "founders": {
     "consensys": {
       "amount": "200000000",
-      "address": "0x8246B2a5B1fEe721de619e8C18020fD0099F0ddb"
+      "address": "0x57b1959071fd24c94b41252328010d6d71ebbf1b"
     },
     "metax": {
       "amount": "200000000",
-      "address": "0x12dcB828854dbEB8252c681Acb675715FcDb958D"
+      "address": "0x534f1fcfc40e7b2811df72dcba147b3bca3672a2"
     }
-  }
+  },
+  "prod": false
 }
