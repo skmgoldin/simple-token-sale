@@ -6,7 +6,8 @@ const BN = require(`bn.js`);
 module.exports = function(deployer, network, accounts) {
     const saleConf = JSON.parse(fs.readFileSync(`./conf/sale.json`));
     const tokenConf = JSON.parse(fs.readFileSync(`./conf/token.json`));
-    const distros = JSON.parse(fs.readFileSync(`./conf/distros.json`));
+    const preBuyersConf = JSON.parse(fs.readFileSync(`./conf/preBuyers.json`));
+    const foundersConf = JSON.parse(fs.readFileSync(`./conf/founders.json`));
 
     if(network === `development`) {
       saleConf.owner = accounts[0];
@@ -21,25 +22,25 @@ module.exports = function(deployer, network, accounts) {
       }
     }
 
-    const founders = [];
-    const foundersTokens = [];
-    for (recipient in distros) {
-      if(distros[recipient].vestingDate === undefined) {
-        founders.push(distros[recipient].address); 
-        foundersTokens.push(new BN(distros[recipient].amount, 10)); 
-      }
+    const preBuyers = [];
+    const preBuyersTokens = [];
+    for (recipient in preBuyersConf) {
+      preBuyers.push(preBuyersConf[recipient].address); 
+      preBuyersTokens.push(new BN(preBuyersConf[recipient].amount, 10)); 
     }
 
-    const timelockBeneficiaries = [];
-    const beneficiaryTokens = [];
-    const vestingDates = [];
-    for (recipient in distros) {
-      if(distros[recipient].vestingDate !== undefined) {
-        timelockBeneficiaries.push(distros[recipient].address); 
-        beneficiaryTokens.push(new BN(distros[recipient].amount, 10)); 
-        vestingDates.push(new BN(distros[recipient].vestingDate, 10)); 
-      }
+    const founders = [];
+    const foundersTokens = [];
+    for (recipient in foundersConf.founders) {
+      founders.push(foundersConf.founders[recipient].address); 
+      foundersTokens.push(new BN(foundersConf.founders[recipient].amount, 10)); 
     }
+
+    const vestingDates = [];
+    for (date in foundersConf.vestingDates) {
+      vestingDates.push(foundersConf.vestingDates[date])
+    }
+
 
     return deployer.deploy(Sale,
       saleConf.owner,
@@ -51,10 +52,10 @@ module.exports = function(deployer, network, accounts) {
       saleConf.price,
       saleConf.startBlock,
       saleConf.freezeBlock,
+      preBuyers,
+      preBuyersTokens,
       founders,
       foundersTokens,
-      timelockBeneficiaries,
-      beneficiaryTokens,
       vestingDates
     )
 };

@@ -10,7 +10,8 @@ const ethRPC = new EthRPC(new HttpProvider(`http://localhost:8545`));
 const ethQuery = new EthQuery(new HttpProvider(`http://localhost:8545`));
 
 contract(`Sale`, (accounts) => {
-  const distros = JSON.parse(fs.readFileSync(`./conf/distros.json`));
+  const preBuyersConf = JSON.parse(fs.readFileSync(`./conf/preBuyers.json`));
+  const foundersConf = JSON.parse(fs.readFileSync(`./conf/founders.json`));
   const saleConf = JSON.parse(fs.readFileSync(`./conf/sale.json`));
   const tokenConf = JSON.parse(fs.readFileSync(`./conf/token.json`));
   const [owner, james, miguel, edwhale] = accounts;
@@ -38,17 +39,16 @@ contract(`Sale`, (accounts) => {
 
   before(() => {
     let tokensPreSold = new BN(`0`, 10);
-    Object.keys(distros).map((curr, i, arr) => {
-      distros[curr].amount = new BN(distros[curr].amount, 10);
-      tokensPreSold = tokensPreSold.add(distros[curr].amount);
+    Object.keys(preBuyersConf).map((curr, i, arr) => {
+      preBuyersConf[curr].amount = new BN(preBuyersConf[curr].amount, 10);
+      tokensPreSold = tokensPreSold.add(preBuyersConf[curr].amount);
       return null;
     });
-    /*
-    for (recipient in distros) {
-      distros[recipient].amount = new BN(distros[recipient].amount, 10);
-      tokensPreSold = tokensPreSold.add(distros[recipient].amount);
-    }
-    */
+    Object.keys(foundersConf.founders).map((curr, i, arr) => {
+      foundersConf.founders[curr].amount = new BN(foundersConf.founders[curr].amount, 10);
+      tokensPreSold = tokensPreSold.add(foundersConf.founders[curr].amount);
+      return null;
+    });
     saleConf.price = new BN(saleConf.price, 10);
     saleConf.startBlock = new BN(saleConf.startBlock, 10);
     tokenConf.initialAmount = new BN(tokenConf.initialAmount, 10);
@@ -56,18 +56,15 @@ contract(`Sale`, (accounts) => {
   });
 
   describe(`Initial token issuance`, () => {
-    it(`should instantiate founders with the proper number of tokens.`, () =>
+    it(`should instantiate preBuyers with the proper number of tokens.`, () =>
       Promise.all(
-        Object.keys(distros).map((curr, i, arr) => {
-          if (curr === `publicSale`) {
-            return Promise.resolve();
-          }
-          return getBalanceOf(distros[curr].address)
+        Object.keys(preBuyersConf).map((curr, i, arr) =>
+          getBalanceOf(preBuyersConf[curr].address)
           .then((balance) =>
-            assert.equal(balance.toString(10), distros[curr].amount.toString(10))
+            assert.equal(balance.toString(10), preBuyersConf[curr].amount.toString(10))
           )
-          .catch((err) => { throw new Error(err); });
-        })
+          .catch((err) => { throw new Error(err); })
+        )
       )
     );
     // Sanity check
@@ -486,7 +483,7 @@ contract(`Sale`, (accounts) => {
       ethQuery.getBalance(saleConf.wallet)
       .then((bal) => {
         const expectedBalance = tokensForSale.mul(saleConf.price);
-        assert.equal(bal.toString(10), expectedBalance,
+        assert.equal(bal.toString(10), expectedBalance.toString(10),
         `The amount of Ether in the wallet is not what it should be at sale end`);
       })
     );

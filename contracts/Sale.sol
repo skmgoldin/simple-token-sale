@@ -1,6 +1,7 @@
 pragma solidity 0.4.11;
 import "./HumanStandardToken.sol";
 import "./Disbursement.sol";
+import "./Filter.sol";
 
 contract Sale {
 
@@ -9,12 +10,8 @@ contract Sale {
      */
 
     event PurchasedTokens(address indexed purchaser, uint amount);
-    event TransferredFoundersReward(address indexed founder, uint amount);
-    event TransferredTimelockedTokens(
-        address indexed timelockRecipient,
-        Disbursement vault,
-        uint amount
-    );
+    event TransferredPreBuyersReward(address indexed founder, uint amount);
+    event TransferredFoundersTokens(address vault, uint amount);
 
     /*
      * Storage
@@ -65,8 +62,8 @@ contract Sale {
     /// @param _tokenSymbol AdToken's human-readable asset symbol
     /// @param _price price of the token in Wei (ADT/Wei pair price)
     /// @param _startBlock the block at which this contract will begin selling its ADT balance
-    /// @param _founders addresses of founders to receive initial token balances
-    /// @param _foundersTokens amounts of tokens to transfer to founders
+    /// @param _preBuyers addresses of preBuyers to receive initial token balances
+    /// @param _preBuyersTokens amounts of tokens to transfer to preBuyers
     function Sale(address _owner,
                   address _wallet,
                   uint256 _tokenSupply,
@@ -76,11 +73,11 @@ contract Sale {
                   uint _price,
                   uint _startBlock,
                   uint _freezeBlock,
+                  address[] _preBuyers,
+                  uint[] _preBuyersTokens,
                   address[] _founders,
                   uint[] _foundersTokens,
-                  address[] _timelockRecipients,
-                  uint[] _timelockTokens,
-                  uint[] _timelockDates) {
+                  uint[] _founderTimelocks) {
         owner = _owner;
         wallet = _wallet;
         token = new HumanStandardToken(_tokenSupply, _tokenName, _tokenDecimals, _tokenSymbol);
@@ -88,45 +85,58 @@ contract Sale {
         startBlock = _startBlock;
         freezeBlock = _freezeBlock;
 
-        token.transfer(this, token.totalSupply());
+        require(token.transfer(this, token.totalSupply()));
         if (token.balanceOf(this) != token.totalSupply()) throw;
         if (token.balanceOf(this) != 10**9) throw;
 
-        distributeFoundersRewards(_founders, _foundersTokens);
+        distributePreBuyersRewards(_preBuyers, _preBuyersTokens);
 
-        distributeTimelockedRewards(_timelockRecipients, _timelockTokens, _timelockDates);
+        distributeFoundersRewards(_founders, _foundersTokens, _founderTimelocks);
     }
 
     /// @dev distributeFoundersRewards(): private utility function called by constructor
-    /// @param _founders an array of addresses to which awards will be distributed
-    /// @param _foundersTokens an array of integers specifying founders rewards
-    function distributeFoundersRewards(address[] _founders, uint[] _foundersTokens) 
+    /// @param _preBuyers an array of addresses to which awards will be distributed
+    /// @param _preBuyersTokens an array of integers specifying preBuyers rewards
+    function distributePreBuyersRewards(address[] _preBuyers, uint[] _preBuyersTokens) 
         private
     { 
-        for(uint i = 0; i < _founders.length; i++) {
-            token.transfer(_founders[i], _foundersTokens[i]);
-            TransferredFoundersReward(_founders[i], _foundersTokens[i]);
+        for(uint i = 0; i < _preBuyers.length; i++) {
+            token.transfer(_preBuyers[i], _preBuyersTokens[i]);
+            TransferredPreBuyersReward(_preBuyers[i], _preBuyersTokens[i]);
         }
 
     }
 
     /// @dev distributeTimelockedRewards(): private utility function called by constructor
-    /// @param _timelockRecipients an array of addresses specifying disbursement beneficiaries
-    /// @param _timelockTokens an array of integers specifying disbursement amounts
-    /// @param _timelockDates an array of UNIX timestamps specifying vesting dates
-    function distributeTimelockedRewards(
-        address[] _timelockRecipients,
-        uint[] _timelockTokens,
-        uint[] _timelockDates) 
+    /// @param _founders an array of addresses specifying disbursement beneficiaries
+    /// @param _foundersTokens an array of integers specifying disbursement amounts
+    /// @param _founderTimelocks an array of UNIX timestamps specifying vesting dates
+    function distributeFoundersRewards(
+        address[] _founders,
+        uint[] _foundersTokens,
+        uint[] _founderTimelocks) 
         private
     { 
-        for(uint i = 0; i < _timelockRecipients.length; i++) {
-            Disbursement vault = new Disbursement(_timelockRecipients[i], 1, _timelockDates[i]);
+        // TODO: SAFE MATH
+        uint tokensPerTranch;
+        uint totalRewards = 0;
+        uint tranches = _founderTimelocks.length;
+        uint[] memory foundersTokensPerTranch = new uint[](_foundersTokens.length);
+
+        for(uint i = 0; i < _foundersTokens.length; i++) {
+            totalRewards = totalRewards + _foundersTokens[i];
+            foundersTokensPerTranch[i] = _foundersTokens[i]/tranches;
+        }
+
+        tokensPerTranch = totalRewards/tranches;
+
+        for(uint j = 0; j < tranches; j++) {
+            Filter filter = new Filter(_founders, foundersTokensPerTranch);
+            Disbursement vault = new Disbursement(filter, 1, _founderTimelocks[j]);
             vault.setup(token);
-            token.transfer(vault, _timelockTokens[i]);
-            TransferredTimelockedTokens(_timelockRecipients[i],
-                                        Disbursement(vault),
-                                        _timelockTokens[i]);
+            filter.setup(vault);
+            require(token.transfer(vault, tokensPerTranch));
+            TransferredFoundersTokens(vault, tokensPerTranch);
         }
     }
 
