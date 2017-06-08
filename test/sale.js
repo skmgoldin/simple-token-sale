@@ -1,5 +1,6 @@
 /*global web3 describe before artifacts assert it contract:true after*/
 const Sale = artifacts.require(`./Sale.sol`);
+const Filter = artifacts.require(`./Filter.sol`);
 const HumanStandardToken = artifacts.require(`./HumanStandardToken.sol`);
 const fs = require(`fs`);
 const BN = require(`bn.js`);
@@ -37,22 +38,32 @@ contract(`Sale`, (accounts) => {
     .catch((err) => { throw new Error(err); });
   }
 
-  before(() => {
+  function totalPreSoldTokens() {
     let tokensPreSold = new BN(`0`, 10);
     Object.keys(preBuyersConf).map((curr, i, arr) => {
       preBuyersConf[curr].amount = new BN(preBuyersConf[curr].amount, 10);
       tokensPreSold = tokensPreSold.add(preBuyersConf[curr].amount);
       return null;
     });
+    return tokensPreSold;
+  }
+
+  function totalFoundersTokens() {
+    let foundersTokens = new BN(`0`, 10);
     Object.keys(foundersConf.founders).map((curr, i, arr) => {
       foundersConf.founders[curr].amount = new BN(foundersConf.founders[curr].amount, 10);
-      tokensPreSold = tokensPreSold.add(foundersConf.founders[curr].amount);
+      foundersTokens = foundersTokens.add(foundersConf.founders[curr].amount);
       return null;
     });
+    return foundersTokens;
+  }
+
+  before(() => {
+    let tokensPreAllocated = totalPreSoldTokens().add(totalFoundersTokens());
     saleConf.price = new BN(saleConf.price, 10);
     saleConf.startBlock = new BN(saleConf.startBlock, 10);
     tokenConf.initialAmount = new BN(tokenConf.initialAmount, 10);
-    tokensForSale = tokenConf.initialAmount.sub(tokensPreSold);
+    tokensForSale = tokenConf.initialAmount.sub(tokensPreAllocated);
   });
 
   describe(`Initial token issuance`, () => {
@@ -67,7 +78,29 @@ contract(`Sale`, (accounts) => {
         )
       )
     );
-    // Sanity check
+    it(`should instantiate disburser contracts with the proper number of tokens.`, () =>
+      Sale.deployed()
+      .then((sale) => sale.filters.call(0))
+      .then((filterAddr) => Filter.at(filterAddr))
+      .then((filter) => filter.disburser.call())
+      .then((disburserAddr) => getBalanceOf(disburserAddr))
+      .then((bal) => {
+        const expectedBalance = totalFoundersTokens().div(new BN(`2`, 10));
+        return assert.equal(bal.toString(10), expectedBalance.toString(10),
+          `A disburser contract has an incorrect token balance.`);
+      })
+      .then(() => Sale.deployed())
+      .then((sale) => sale.filters.call(1))
+      .then((filterAddr) => Filter.at(filterAddr))
+      .then((filter) => filter.disburser.call())
+      .then((disburserAddr) => getBalanceOf(disburserAddr))
+      .then((bal) => {
+        const expectedBalance = totalFoundersTokens().div(new BN(`2`, 10));
+        return assert.equal(bal.toString(10), expectedBalance.toString(10),
+          `A disburser contract has an incorrect token balance.`);
+      })
+      .catch((err) => { throw new Error(err); })
+    );
     it(`should instantiate the public sale with the total supply of tokens ` +
        `minus the sum of tokens pre-sold.`, () =>
       getBalanceOf(Sale.address)
