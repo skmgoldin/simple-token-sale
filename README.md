@@ -16,7 +16,7 @@ Note that you will need to restart the testrpc every time you run the tests, as 
 # Composition of the repo
 The repo is composed as a Truffle project. The test suite can be found in `test/sale.json`. The sale contract is in `contracts/Sale.sol`. The deployment scripts are in the `migrations` folder.
 
-The first migration deploys Truffle's own migration contract. The second deploys an ERC-20 token. The third deploys the sale contract and the fourth issues tokens to the sale contract itself and other parties with pre-allocations.
+The Sale contract deploys the AdToken contract, disburses funds to pre-sale purchasers and then deploys timelock contracts to store the founders tokens. `Disbursement.sol` and `Filter.sol` comprise the timelock contracts. Two `Disbursement.sol` contracts are deployed which unlock funds at a particular date. The `Filter.sol` contracts sit in front of them and allow particular addresses to withdraw particular amounts of funds.
 
 Config files where magic numbers can be fiddled with are in the `conf` directory.
 
