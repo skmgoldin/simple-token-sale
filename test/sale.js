@@ -275,16 +275,20 @@ contract(`Sale`, (accounts) => {
   });
 
   describe(`Pre-sale period`, () => {
-    it(`should reject a purchase from James.`, () =>
-      purchaseToken(james, new BN(`420`, 10))
+    it(`should reject a purchase from James.`, () => {
+      let startingBalance;
+
+      return getTokenBalanceOf(james)
+      .then((bal) => { startingBalance = bal; })
+      .then(() => purchaseToken(james, new BN(`420`, 10)))
       .then(() => {
         throw new Error(`James was able to purchase tokens when he ` +
         `should not have been able to.`);
       })
       .catch((err) => getTokenBalanceOf(james))
-      .then((balance) => assert.equal(balance.toString(10), `0`, `James was able ` +
-        `to purchase tokens in the pre-sale period.`))
-    );
+      .then((balance) => assert.equal(balance.toString(10), startingBalance.toString(10),
+        `James was able to purchase tokens in the pre-sale period.`));
+    });
     it(`should allow owner to purchase 1 token`, () =>
       purchaseToken(owner, new BN(`1`, 10))
       .then(() => getTokenBalanceOf(owner))
@@ -331,28 +335,53 @@ contract(`Sale`, (accounts) => {
       .then((instance) => instance.price.call())
       .then((res) => assert.equal(res.toString(10), saleConf.price.toString(10),
         `The owner was able to change the price after the freeze block.`))
+      .catch((err) => { throw new Error(err); })
     );
     it(`should transfer 1 token to James.`, () => {
-      purchaseToken(james, new BN(`1`, 10))
+      let startingBalance;
+      const purchaseAmount = new BN(`1`, 10);
+
+      return getTokenBalanceOf(james)
+      .then((bal) => { startingBalance = bal; })
+      .then(() => purchaseToken(james, purchaseAmount))
       .then(() => getTokenBalanceOf(james))
-      .then((balance) => assert.equal(balance.toString(10), `1`, `James was not able ` +
-        `to purchase tokens in the sale period.`))
+      .then((balance) => {
+        const expectedAmount = startingBalance.add(purchaseAmount);
+        assert.equal(balance.toString(10), expectedAmount.toString(10),
+        `James was not able to purchase tokens in the sale period.`);
+      })
       .catch((err) => { throw new Error(err); });
     });
-    it(`should transfer 10 tokens to Miguel.`, () =>
-      purchaseToken(miguel, new BN(`10`, 10))
+    it(`should transfer 10 tokens to Miguel.`, () => {
+      let startingBalance;
+      const purchaseAmount = new BN(`10`, 10);
+
+      return getTokenBalanceOf(miguel)
+      .then((bal) => { startingBalance = bal; })
+      .then(() => purchaseToken(miguel, purchaseAmount))
       .then(() => getTokenBalanceOf(miguel))
-      .then((balance) => assert.equal(balance.toString(10), `10`, `Miguel was not able ` +
-        `to purchase tokens in the sale period.`))
-      .catch((err) => { throw new Error(err); })
-    );
-    it(`should transfer 100 tokens to Edwhale.`, () =>
-      purchaseToken(edwhale, new BN(`100`, 10))
+      .then((balance) => {
+        const expectedAmount = startingBalance.add(purchaseAmount);
+        return assert.equal(balance.toString(10), expectedAmount.toString(10),
+        `Miguel was not able to purchase tokens in the sale period.`);
+      })
+      .catch((err) => { throw new Error(err); });
+    });
+    it(`should transfer 100 tokens to Edwhale.`, () => {
+      let startingBalance;
+      const purchaseAmount = new BN(`100`, 10);
+
+      return getTokenBalanceOf(edwhale)
+      .then((bal) => { startingBalance = bal; })
+      .then(() => purchaseToken(edwhale, purchaseAmount))
       .then(() => getTokenBalanceOf(edwhale))
-      .then((balance) => assert.equal(balance.toString(10), `100`, `Edwhale was not able ` +
-        `to purchase tokens in the sale period.`))
-      .catch((err) => { throw new Error(err); })
-    );
+      .then((balance) => {
+        const expectedAmount = startingBalance.add(purchaseAmount);
+        assert.equal(balance.toString(10), expectedAmount.toString(10),
+        `Edwhale was not able to purchase tokens in the sale period.`);
+      })
+      .catch((err) => { throw new Error(err); });
+    });
     it(`should not transfer 100 tokens to Edwhale when not enough Ether is sent.`, () =>
       Sale.deployed()
       .then((instance) => instance.purchaseToken(new BN(`100`, 10),
@@ -381,16 +410,24 @@ contract(`Sale`, (accounts) => {
       .then((instance) => instance.emergencyToggle({from: owner}))
       .catch((err) => { throw new Error(err); })
     );
-    it(`should not transfer 1 token to James.`, () =>
-      purchaseToken(james, new BN(`1`, 10))
+    it(`should not transfer 1 token to James.`, () => {
+      let startingBalance;
+      const purchaseAmount = new BN(`1`, 10);
+
+      return getTokenBalanceOf(james)
+      .then((bal) => { startingBalance = bal; })
+      .then(() => purchaseToken(james, purchaseAmount))
       .then(() => {
         throw new Error(`James was able ` +
         `to purchase tokens in the emergency stop period.`);
       })
       .catch((err) => getTokenBalanceOf(james))
-      .then((balance) => assert.equal(balance.toString(10), `1`, `James was able ` +
-        `to purchase tokens in the emergency stop period.`))
-    );
+      .then((balance) => {
+        const expectedAmount = startingBalance;
+        assert.equal(balance.toString(10), expectedAmount.toString(10),
+        `James was able to purchase tokens in the emergency stop period.`);
+      });
+    });
     it(`should not transfer 10 tokens to Miguel.`, () =>
       purchaseToken(miguel, new BN(`10`, 10))
       .then(() => {
@@ -482,16 +519,24 @@ contract(`Sale`, (accounts) => {
   });
 
   describe(`Post-sale period`, () => {
-    it(`should not transfer 1 token to James.`, () =>
-      purchaseToken(james, new BN(`1`, 10))
+    it(`should not transfer 1 token to James.`, () => {
+      let startingBalance;
+      const purchaseAmount = new BN(`1`, 10);
+
+      return getTokenBalanceOf(james)
+      .then((bal) => { startingBalance = bal; })
+      .then(() => purchaseToken(james, purchaseAmount))
       .then(() => {
         throw new Error(`James was able ` +
         `to purchase tokens after the sale ended.`);
       })
       .catch((err) => getTokenBalanceOf(james))
-      .then((balance) => assert.equal(balance.toString(10), 1, `James was able ` +
-        `to purchase tokens after the sale ended.`))
-    );
+      .then((balance) => {
+        const expectedAmount = startingBalance;
+        assert.equal(balance.toString(10), expectedAmount.toString(10),
+          `James was able to purchase tokens after the sale ended.`);
+      });
+    });
     it(`should not transfer 10 tokens to Miguel.`, () =>
       purchaseToken(miguel, new BN(`10`, 10))
       .then(() => {
