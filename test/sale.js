@@ -65,9 +65,13 @@ contract(`Sale`, (accounts) => {
   }
 
   function getFoundersAddresses() {
-    return Object.keys(foundersConf.founders).map((curr, i, arr) =>
+    return getFounders().map((curr, i, arr) =>
       foundersConf.founders[curr].address
     );
+  }
+
+  function getFounders() {
+    return Object.keys(foundersConf.founders);
   }
 
   before(() => {
@@ -578,23 +582,23 @@ contract(`Sale`, (accounts) => {
           method: `evm_increaseTime`,
           params: [34190000] // 13 months in seconds
         }, (err) =>
-          resolve(Promise.all(getFoundersAddresses().map((curr, i, arr) => {
+          resolve(Promise.all(getFounders().map((curr, i, arr) => {
             if(err) { throw new Error(err); }
             return getFilter(0)
-            .then((filter) => filter.claim({from: curr}))
-            .then(() => getBalanceOf(curr))
+            .then((filter) => filter.claim({from: foundersConf.founders[curr].address}))
+            .then(() => getBalanceOf(foundersConf.founders[curr].address))
             .then((bal) => {
-              const expectedBalance = new BN(`100000000`, 10);
+              const expectedBalance = foundersConf.founders[curr].amount.div(new BN(`2`, 10));
               return assert.equal(expectedBalance.toString(10), bal.toString(10),
                 `Founder was not able to withdraw tokens at their vesting date.`);
             })
             .then(() => getFilter(1))
-            .then((filter) => filter.claim({from: curr}))
+            .then((filter) => filter.claim({from: foundersConf.founders[curr].address}))
             .then(() => { throw new Error(`Founder was able to withdraw tokens ` +
               `before their vesting date.`); })
-            .catch((err) => getBalanceOf(curr))
+            .catch((err) => getBalanceOf(foundersConf.founders[curr].address))
             .then((bal) => {
-              const expectedBalance = new BN(`100000000`, 10);
+              const expectedBalance = foundersConf.founders[curr].amount.div(new BN(`2`, 10));
               return assert.equal(expectedBalance.toString(10), bal.toString(10),
                 `Founder was able to withdraw tokens before their vesting date.`);
             })
