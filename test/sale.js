@@ -1,4 +1,4 @@
-/*global web3 describe before artifacts assert it contract:true*/
+/*global web3 describe before artifacts assert it contract:true after*/
 const Sale = artifacts.require(`./Sale.sol`);
 const HumanStandardToken = artifacts.require(`./HumanStandardToken.sol`);
 const fs = require(`fs`);
@@ -10,9 +10,12 @@ const ethRPC = new EthRPC(new HttpProvider(`http://localhost:8545`));
 const ethQuery = new EthQuery(new HttpProvider(`http://localhost:8545`));
 
 contract(`Sale`, (accounts) => {
-  const saleConf = JSON.parse(fs.readFileSync(`./conf/sale.json`));
   const distros = JSON.parse(fs.readFileSync(`./conf/distros.json`));
+  const saleConf = JSON.parse(fs.readFileSync(`./conf/sale.json`));
+  const tokenConf = JSON.parse(fs.readFileSync(`./conf/token.json`));
   const [owner, james, miguel, edwhale] = accounts;
+
+  let tokensForSale;
 
   /*
    * Utility Functions
@@ -34,42 +37,44 @@ contract(`Sale`, (accounts) => {
   }
 
   before(() => {
+    let tokensPreSold = new BN(`0`, 10);
+    Object.keys(distros).map((curr, i, arr) => {
+      distros[curr].amount = new BN(distros[curr].amount, 10);
+      tokensPreSold = tokensPreSold.add(distros[curr].amount);
+      return null;
+    });
+    /*
     for (recipient in distros) {
       distros[recipient].amount = new BN(distros[recipient].amount, 10);
+      tokensPreSold = tokensPreSold.add(distros[recipient].amount);
     }
+    */
     saleConf.price = new BN(saleConf.price, 10);
     saleConf.startBlock = new BN(saleConf.startBlock, 10);
- });
+    tokenConf.initialAmount = new BN(tokenConf.initialAmount, 10);
+    tokensForSale = tokenConf.initialAmount.sub(tokensPreSold);
+  });
 
   describe(`Initial token issuance`, () => {
-
     it(`should instantiate founders with the proper number of tokens.`, () =>
       Promise.all(
         Object.keys(distros).map((curr, i, arr) => {
-          if(curr === `publicSale`) {
-            return null;
+          if (curr === `publicSale`) {
+            return Promise.resolve();
           }
-          /*
-          return Token.deployed()
-          .then((instance) =>
-            instance.balanceOf.call(distros[curr].address)
-          )
-          */
           return getBalanceOf(distros[curr].address)
           .then((balance) =>
             assert.equal(balance.toString(10), distros[curr].amount.toString(10))
           )
-          .catch((err) => { throw new Error(err); })
+          .catch((err) => { throw new Error(err); });
         })
       )
     );
     // Sanity check
-    it(`should instantiate the public sale with ${500000000} tokens. ` +
-      `(This is a sanity check.).`, () =>
-      //Token.deployed()
-      //.then((instance) => instance.balanceOf.call(Sale.address))
+    it(`should instantiate the public sale with the total supply of tokens ` +
+       `minus the sum of tokens pre-sold.`, () =>
       getBalanceOf(Sale.address)
-      .then((balance) => assert.equal(balance.valueOf(), 500000000,
+      .then((balance) => assert.equal(balance.toString(10), tokensForSale.toString(10),
         `The sale contract was not given the correct number of tokens to sell`))
     );
   });
@@ -317,7 +322,7 @@ contract(`Sale`, (accounts) => {
     it(`should not transfer 100 tokens to Edwhale when not enough Ether is sent.`, () =>
       Sale.deployed()
       .then((instance) => instance.purchaseToken(new BN(`100`, 10),
-        {from: actor, value: new BN(`100`, 10).mul(saleConf.price).sub(`1`, 10)}))
+        {from: edwhale, value: new BN(`100`, 10).mul(saleConf.price).sub(`1`, 10)}))
       .then(() => { throw new Error(`Transaction succeeded which should have failed.`); })
       .catch((err) => getBalanceOf(edwhale))
       .then((balance) => assert.equal(balance.toString(10), `100`, `Edwhale was able ` +
@@ -327,7 +332,7 @@ contract(`Sale`, (accounts) => {
     it(`should not transfer 100 tokens to Edwhale when too much Ether is sent.`, () =>
       Sale.deployed()
       .then((instance) => instance.purchaseToken(new BN(`100`, 10),
-        {from: actor, value: new BN(`100`, 10).mul(saleConf.price).add(`1`, 10)}))
+        {from: edwhale, value: new BN(`100`, 10).mul(saleConf.price).add(`1`, 10)}))
       .then(() => { throw new Error(`Transaction succeeded which should have failed.`); })
       .catch((err) => getBalanceOf(edwhale))
       .then((balance) => assert.equal(balance.toString(10), `100`, `Edwhale was able ` +
@@ -380,8 +385,13 @@ contract(`Sale`, (accounts) => {
   });
 
   describe(`Sale period 1`, () => {
-    it(`should reject a transfer of 500000000 tokens to Edwhale.`, () =>
-      purchaseToken(edwhale, new BN(`500000000`, 10))
+    it(`should reject a transfer of tokens to Edwhale greater than the sum ` +
+       `of tokens available for purchase.`, () =>
+      getBalanceOf(Sale.address)
+      .then((res) => {
+        const tooMuch = res.add(new BN(`1`, 10));
+        return purchaseToken(edwhale, tooMuch);
+      })
       .then(() => {
         throw new Error(`Edwhale was able ` +
         `to purchase more tokens than should be available.`);
@@ -418,14 +428,20 @@ contract(`Sale`, (accounts) => {
     });
     it(`should transfer all the remaining tokens to Edwhale.`, () => {
       let saleBalance;
-      return getBalanceOf(Sale.address)
-      .then((balance) => {
-        saleBalance = new BN(balance.toString(10), 10);
+      let startingBalance;
+
+      return getBalanceOf(edwhale)
+      .then((bal) => {
+        startingBalance = bal;
+      })
+      .then(() => getBalanceOf(Sale.address))
+      .then((bal) => {
+        saleBalance = bal;
         return purchaseToken(edwhale, saleBalance);
       })
       .then(() => getBalanceOf(edwhale))
-      .then((balance) => assert.equal(balance.toString(10),
-        saleBalance.add(new BN(`101`, 10)).toString(10),
+      .then((bal) => assert.equal(bal.toString(10),
+        startingBalance.add(saleBalance),
         `Edwhale was able to purchase more tokens than should be available.`))
       .catch((err) => { throw new Error(err); });
     });
@@ -452,24 +468,27 @@ contract(`Sale`, (accounts) => {
       .then((balance) => assert.equal(balance.toString(10), `10`, `Miguel was able ` +
         `to purchase tokens after the sale ended.`))
     );
-    it(`should not transfer 100 tokens to Edwhale.`, () =>
-      purchaseToken(edwhale, new BN(`100`, 10))
+    it(`should not transfer 100 tokens to Edwhale.`, () => {
+      let startingBalance;
+
+      return getBalanceOf(edwhale)
+      .then((bal) => { startingBalance = bal; })
+      .then(() => purchaseToken(edwhale, new BN(`100`, 10)))
       .then(() => {
         throw new Error(`Edwhale was able ` +
         `to purchase tokens after the sale ended.`);
       })
       .catch((err) => getBalanceOf(edwhale))
-      .then((balance) => assert.equal(balance.toString(10),
-        new BN(500000000, 10).sub(new BN(`12`, 10)).toString(10),
-        `Edwhale was able to purchase tokens after the sale ended.`))
-    );
-    it(`should report ` +
-      `${new BN(500000000, 10).mul(new BN(saleConf.price, 10)).toString(10)} ` +
-      `Wei in the wallet.`, () =>
+      .then((bal) => assert.equal(bal.toString(10), startingBalance.toString(10),
+        `Edwhale was able to purchase tokens after the sale ended.`));
+    });
+    it(`should report the proper sum of Wei in the wallet.`, () =>
       ethQuery.getBalance(saleConf.wallet)
-      .then((balance) => assert.equal(balance.toString(10),
-        new BN(500000000, 10).mul(new BN(saleConf.price, 10)).toString(10),
-        `The amount of Ether in the wallet is not what it should be at sale end`))
+      .then((bal) => {
+        const expectedBalance = tokensForSale.mul(saleConf.price);
+        assert.equal(bal.toString(10), expectedBalance,
+        `The amount of Ether in the wallet is not what it should be at sale end`);
+      })
     );
     it(`should report a zero balance for the sale contract.`, () =>
       getBalanceOf(Sale.address)
@@ -477,7 +496,6 @@ contract(`Sale`, (accounts) => {
         `ended with tokens still in the sale contract`))
     );
     it(`should allow Edwhale to transfer 10 tokens to James.`, () =>
-      //Token.deployed()
       Sale.deployed()
       .then((instance) => instance.token.call())
       .then((tokenAddr) => HumanStandardToken.at(tokenAddr))
