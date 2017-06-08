@@ -3,9 +3,9 @@ import "./Disbursement.sol";
 
 contract Filter {
 
-    Disbursement disburser;
-    address owner;
-    mapping(address => Beneficiary) beneficiaries;
+    Disbursement public disburser;
+    address public owner;
+    mapping(address => Beneficiary) public beneficiaries;
 
     struct Beneficiary {
         uint claimAmount;
@@ -45,5 +45,4 @@ contract Filter {
         beneficiaries[msg.sender].claimed = true;
         disburser.withdraw(msg.sender, beneficiaries[msg.sender].claimAmount);
     }
-
 }
