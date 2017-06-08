@@ -24,6 +24,7 @@ contract Sale {
     uint public startBlock;
     uint public freezeBlock;
     bool public emergencyFlag = false;
+    address[] public filters;
 
     /*
      * Modifiers
@@ -132,6 +133,7 @@ contract Sale {
 
         for(uint j = 0; j < tranches; j++) {
             Filter filter = new Filter(_founders, foundersTokensPerTranch);
+            filters.push(filter);
             Disbursement vault = new Disbursement(filter, 1, _founderTimelocks[j]);
             vault.setup(token);
             filter.setup(vault);
