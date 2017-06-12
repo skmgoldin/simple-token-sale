@@ -122,22 +122,20 @@ contract Sale {
         private
     { 
         // TODO: SAFE MATH
+
         // Total number of tokens to be disbursed for a given tranch. Used when
         // tokens are transferred to disbursement contracts.
-        uint tokensPerTranch;
-        uint totalRewards = 0;
+        uint tokensPerTranch = 0;
         // Alias of founderTimelocks.length for legibility
         uint tranches = _founderTimelocks.length;
         // The number of tokens which may be withdrawn per founder for each tranch
         uint[] memory foundersTokensPerTranch = new uint[](_foundersTokens.length);
 
-        // Compute totalRewards to be disbursed and foundersTokensPerTranch
+        // Compute foundersTokensPerTranch and tokensPerTranch
         for(uint i = 0; i < _foundersTokens.length; i++) {
-            totalRewards = totalRewards + _foundersTokens[i];
             foundersTokensPerTranch[i] = _foundersTokens[i]/tranches;
+            tokensPerTranch = tokensPerTranch + foundersTokensPerTranch[i];
         }
-
-        tokensPerTranch = totalRewards/tranches;
 
         for(uint j = 0; j < tranches; j++) {
             Filter filter = new Filter(_founders, foundersTokensPerTranch);
