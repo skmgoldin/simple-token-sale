@@ -15,8 +15,11 @@ module.exports = function(deployer, network, accounts) {
       saleConf.prod = false;
       fs.writeFileSync(`./conf/sale.json`, JSON.stringify(saleConf, null, `  `));
 
-      foundersConf.founders.consensys.address = accounts[10];
-      foundersConf.founders.metax.address = accounts[11];
+      let i = 10; // We use addresses from 0-3 for actors in the tests.
+      for (founder in foundersConf.founders) {
+        foundersConf.founders[founder].address = accounts[i];
+        i++;
+      }
       foundersConf.prod = false;
       fs.writeFileSync(`./conf/founders.json`, JSON.stringify(foundersConf, null, `  `));
     }
