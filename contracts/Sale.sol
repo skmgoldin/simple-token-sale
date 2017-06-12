@@ -65,6 +65,9 @@ contract Sale {
     /// @param _startBlock the block at which this contract will begin selling its ADT balance
     /// @param _preBuyers addresses of preBuyers to receive initial token balances
     /// @param _preBuyersTokens amounts of tokens to transfer to preBuyers
+    /// @param _founders addresses of founders to receive timelocked tokens
+    /// @param _foundersTokens amounts of tokens to disburse to founders over time
+    /// @param _founderTimelocks vesting periods as UNIX timestamps
     function Sale(address _owner,
                   address _wallet,
                   uint256 _tokenSupply,
@@ -119,11 +122,16 @@ contract Sale {
         private
     { 
         // TODO: SAFE MATH
+        // Total number of tokens to be disbursed for a given tranch. Used when
+        // tokens are transferred to disbursement contracts.
         uint tokensPerTranch;
         uint totalRewards = 0;
+        // Alias of founderTimelocks.length for legibility
         uint tranches = _founderTimelocks.length;
+        // The number of tokens which may be withdrawn per founder for each tranch
         uint[] memory foundersTokensPerTranch = new uint[](_foundersTokens.length);
 
+        // Compute totalRewards to be disbursed and foundersTokensPerTranch
         for(uint i = 0; i < _foundersTokens.length; i++) {
             totalRewards = totalRewards + _foundersTokens[i];
             foundersTokensPerTranch[i] = _foundersTokens[i]/tranches;
