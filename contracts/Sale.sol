@@ -10,7 +10,7 @@ contract Sale {
      */
 
     event PurchasedTokens(address indexed purchaser, uint amount);
-    event TransferredPreBuyersReward(address indexed founder, uint amount);
+    event TransferredPreBuyersReward(address indexed preBuyer, uint amount);
     event TransferredFoundersTokens(address vault, uint amount);
 
     /*
