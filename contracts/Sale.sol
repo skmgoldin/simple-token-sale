@@ -137,12 +137,17 @@ contract Sale {
             tokensPerTranch = tokensPerTranch + foundersTokensPerTranch[i];
         }
 
+        // Deploy disbursement and filter contract pairs, initialize both and store
+        // filter addresses in filters array. Finally, transfer tokensPerTranch to
+        // disbursement contracts.
         for(uint j = 0; j < tranches; j++) {
             Filter filter = new Filter(_founders, foundersTokensPerTranch);
             filters.push(filter);
             Disbursement vault = new Disbursement(filter, 1, _founderTimelocks[j]);
-            vault.setup(token);
-            filter.setup(vault);
+            // Give the disbursement contract the address of the token it disburses.
+            vault.setup(token);             
+            // Give the filter contract the address of the disbursement contract it access controls
+            filter.setup(vault);             
             require(token.transfer(vault, tokensPerTranch));
             TransferredFoundersTokens(vault, tokensPerTranch);
         }
