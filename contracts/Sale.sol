@@ -121,8 +121,6 @@ contract Sale {
         uint[] _founderTimelocks) 
         private
     { 
-        // TODO: SAFE MATH
-
         // Total number of tokens to be disbursed for a given tranch. Used when
         // tokens are transferred to disbursement contracts.
         uint tokensPerTranch = 0;
@@ -146,8 +144,10 @@ contract Sale {
             Disbursement vault = new Disbursement(filter, 1, _founderTimelocks[j]);
             // Give the disbursement contract the address of the token it disburses.
             vault.setup(token);             
-            // Give the filter contract the address of the disbursement contract it access controls
+            // Give the filter contract the address of the disbursement contract
+            // it access controls
             filter.setup(vault);             
+            // Transfer to the vault the tokens it is to disburse
             require(token.transfer(vault, tokensPerTranch));
             TransferredFoundersTokens(vault, tokensPerTranch);
         }
