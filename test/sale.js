@@ -781,13 +781,34 @@ contract(`Sale`, (accounts) => {
         `ended with tokens still in the sale contract`))
     );
     it(`should allow Edwhale to transfer 10 tokens to James.`, () =>
-      Sale.deployed()
-      .then((instance) => instance.token.call())
-      .then((tokenAddr) => HumanStandardToken.at(tokenAddr))
-      .then((instance) => instance.transfer(james, `10`, {from: edwhale}))
-      .then(() => getTokenBalanceOf(james))
-      .then((balance) => assert.equal(balance.toString(10), `11`,
-        `Edwhale was not able to transfer tokens to James`))
+      new Promise((resolve, reject) => {
+        let edwhaleStartingBalance;
+        let jamesStartingBalance;
+        const transferAmount = new BN(`10`, 10);
+
+        return getTokenBalanceOf(edwhale)
+        .then((balance) => { edwhaleStartingBalance = balance; })
+        .then(() => getTokenBalanceOf(james))
+        .then((balance) => { jamesStartingBalance = balance; })
+        .then(() => Sale.deployed())
+        .then((instance) => instance.token.call())
+        .then((tokenAddr) => HumanStandardToken.at(tokenAddr))
+        .then((instance) => instance.transfer(james, transferAmount, {from: edwhale}))
+        .then(() => getTokenBalanceOf(edwhale))
+        .then((balance) => {
+          const expectedEdwhaleBalance = edwhaleStartingBalance.sub(transferAmount);
+          assert.equal(balance.toString(10), expectedEdwhaleBalance.toString(10),
+          `Edwhale's balance is not as-expected`);
+        })
+        .then(() => getTokenBalanceOf(james))
+        .then((balance) => {
+          const expectedJamesBalance = jamesStartingBalance.add(transferAmount);
+          assert.equal(balance.toString(10), expectedJamesBalance.toString(10),
+          `James' balance is not as-expected`);
+        })
+        .then(() => resolve())
+        .catch((err) => reject(err));
+      })
     );
   });
 
