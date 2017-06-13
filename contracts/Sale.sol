@@ -24,6 +24,8 @@ contract Sale {
     uint public startBlock;
     uint public freezeBlock;
     bool public emergencyFlag = false;
+    bool public preSaleTokensDisbursed = false;
+    bool public foundersTokensDisbursed = false;
     address[] public filters;
 
     /*
@@ -45,6 +47,11 @@ contract Sale {
         _;
     }
 
+    modifier setupComplete {
+        require(preSaleTokensDisbursed && foundersTokensDisbursed);
+        _;
+    }
+
     modifier notInEmergency {
         require(emergencyFlag == false);
         _;
@@ -63,25 +70,17 @@ contract Sale {
     /// @param _tokenSymbol AdToken's human-readable asset symbol
     /// @param _price price of the token in Wei (ADT/Wei pair price)
     /// @param _startBlock the block at which this contract will begin selling its ADT balance
-    /// @param _preBuyers addresses of preBuyers to receive initial token balances
-    /// @param _preBuyersTokens amounts of tokens to transfer to preBuyers
-    /// @param _founders addresses of founders to receive timelocked tokens
-    /// @param _foundersTokens amounts of tokens to disburse to founders over time
-    /// @param _founderTimelocks vesting periods as UNIX timestamps
-    function Sale(address _owner,
-                  address _wallet,
-                  uint256 _tokenSupply,
-                  string _tokenName,
-                  uint8 _tokenDecimals,
-                  string _tokenSymbol,
-                  uint _price,
-                  uint _startBlock,
-                  uint _freezeBlock,
-                  address[] _preBuyers,
-                  uint[] _preBuyersTokens,
-                  address[] _founders,
-                  uint[] _foundersTokens,
-                  uint[] _founderTimelocks) {
+    function Sale(
+        address _owner,
+        address _wallet,
+        uint256 _tokenSupply,
+        string _tokenName,
+        uint8 _tokenDecimals,
+        string _tokenSymbol,
+        uint _price,
+        uint _startBlock,
+        uint _freezeBlock
+    ) {
         owner = _owner;
         wallet = _wallet;
         token = new HumanStandardToken(_tokenSupply, _tokenName, _tokenDecimals, _tokenSymbol);
@@ -92,23 +91,26 @@ contract Sale {
         require(token.transfer(this, token.totalSupply()));
         if (token.balanceOf(this) != token.totalSupply()) throw;
         if (token.balanceOf(this) != 10**18) throw;
-
-        distributePreBuyersRewards(_preBuyers, _preBuyersTokens);
-
-        distributeFoundersRewards(_founders, _foundersTokens, _founderTimelocks);
     }
 
     /// @dev distributeFoundersRewards(): private utility function called by constructor
     /// @param _preBuyers an array of addresses to which awards will be distributed
     /// @param _preBuyersTokens an array of integers specifying preBuyers rewards
-    function distributePreBuyersRewards(address[] _preBuyers, uint[] _preBuyersTokens) 
-        private
+    function distributePreBuyersRewards(
+        address[] _preBuyers,
+        uint[] _preBuyersTokens
+    ) 
+        public
+        onlyOwner
     { 
+        require(!preSaleTokensDisbursed);
+
         for(uint i = 0; i < _preBuyers.length; i++) {
             require(token.transfer(_preBuyers[i], _preBuyersTokens[i]));
             TransferredPreBuyersReward(_preBuyers[i], _preBuyersTokens[i]);
         }
 
+        preSaleTokensDisbursed = true;
     }
 
     /// @dev distributeTimelockedRewards(): private utility function called by constructor
@@ -118,9 +120,14 @@ contract Sale {
     function distributeFoundersRewards(
         address[] _founders,
         uint[] _foundersTokens,
-        uint[] _founderTimelocks) 
-        private
+        uint[] _founderTimelocks
+    ) 
+        public
+        onlyOwner
     { 
+        require(preSaleTokensDisbursed);
+        require(!foundersTokensDisbursed);
+
         // Total number of tokens to be disbursed for a given tranch. Used when
         // tokens are transferred to disbursement contracts.
         uint tokensPerTranch = 0;
@@ -151,6 +158,8 @@ contract Sale {
             require(token.transfer(vault, tokensPerTranch));
             TransferredFoundersTokens(vault, tokensPerTranch);
         }
+
+        foundersTokensDisbursed = true;
     }
 
     /// @dev purchaseToken(): function that exchanges ETH for ADT (main sale function)
@@ -158,6 +167,7 @@ contract Sale {
     function purchaseTokens()
         saleStarted
         payable
+        setupComplete
         notInEmergency
     {
         uint excessAmount = msg.value % price;
@@ -213,4 +223,5 @@ contract Sale {
     {
         emergencyFlag = !emergencyFlag;
     }
+
 }

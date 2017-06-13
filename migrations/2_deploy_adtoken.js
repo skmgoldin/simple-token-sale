@@ -59,11 +59,17 @@ module.exports = function(deployer, network, accounts) {
       tokenConf.tokenSymbol,
       saleConf.price,
       saleConf.startBlock,
-      saleConf.freezeBlock,
+      saleConf.freezeBlock
+    )
+    .then(() => Sale.deployed())
+    .then((sale) => sale.distributePreBuyersRewards(
       preBuyers,
-      preBuyersTokens,
+      preBuyersTokens
+    ))
+    .then(() => Sale.deployed())
+    .then((sale) => sale.distributeFoundersRewards(
       founders,
       foundersTokens,
       vestingDates
-    )
+    ));
 };
