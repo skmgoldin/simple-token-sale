@@ -194,6 +194,13 @@ contract Sale {
         price = _newPrice;
     }
 
+    function changeWallet(address _wallet)
+        onlyOwner
+        notFrozen
+    {
+        wallet = _wallet;
+    }
+
     function changeStartBlock(uint _newBlock)
         onlyOwner
         notFrozen

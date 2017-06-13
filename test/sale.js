@@ -271,6 +271,22 @@ contract(`Sale`, (accounts) => {
         .catch((err) => reject(err))
       )
     );
+    it(`should not allow James to change the wallet.`, () =>
+      new Promise((resolve, reject) =>
+        Sale.deployed()
+        .then((sale) => sale.changeWallet(james, {from: james}))
+        .then(() => reject(`A non-owner was able to change the wallet`))
+        .catch((err) => Sale.deployed())
+        .then((sale) => sale.wallet.call())
+        .then((wallet) =>
+          resolve(
+            assert.equal(wallet.valueOf(), saleConf.wallet,
+            `A non-owner was able to change the sale wallet`)
+          )
+        )
+        .catch((err) => reject(err))
+      )
+    );
     it(`should not allow James to activate the emergencyToggle.`, () =>
       new Promise((resolve, reject) =>
         Sale.deployed()
@@ -334,15 +350,15 @@ contract(`Sale`, (accounts) => {
         .catch((err) => reject(err))
       )
     );
-    it(`should change the price to 1.`, () =>
+    it(`should change the price to 2666.`, () =>
       new Promise((resolve, reject) =>
         Sale.deployed()
-        .then((sale) => sale.changePrice(new BN(`1`, 10), {from: owner}))
+        .then((sale) => sale.changePrice(new BN(`2666`, 10), {from: owner}))
         .then(() => Sale.deployed())
         .then((sale) => sale.price.call())
         .then((price) =>
           resolve(
-            assert.equal(price.toString(10), `1`,
+            assert.equal(price.toString(10), `2666`,
             `The owner was not able to change the price`)
           )
         )
@@ -378,6 +394,31 @@ contract(`Sale`, (accounts) => {
         )
         .catch((err) => reject(err))
       )
+    );
+    it(`should change the wallet address`, () =>
+      new Promise((resolve, reject) => {
+        const newWallet = `0x0000000000000000000000000000000000000000`;
+        Sale.deployed()
+        .then((sale) => sale.changeWallet(newWallet, {from: owner}))
+        .then(() => Sale.deployed())
+        .then((sale) => sale.wallet.call())
+        .then((wallet) => {
+          const expectedValue = newWallet;
+          assert.equal(wallet, expectedValue,
+          `The owner was not able to change the wallet address to 0`);
+        })
+        .then(() => Sale.deployed())
+        .then((sale) => sale.changeWallet(saleConf.wallet, {from: owner}))
+        .then(() => Sale.deployed())
+        .then((sale) => sale.wallet.call())
+        .then((wallet) => {
+          const expectedValue = saleConf.wallet;
+          assert.equal(wallet, expectedValue,
+          `The owner was not able to change the wallet address to ${saleConf.wallet}`);
+        })
+        .then(() => resolve())
+        .catch((err) => reject(err));
+      })
     );
     it(`should activate the emergencyFlag.`, () =>
       new Promise((resolve, reject) =>
