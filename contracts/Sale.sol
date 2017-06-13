@@ -91,7 +91,7 @@ contract Sale {
 
         require(token.transfer(this, token.totalSupply()));
         if (token.balanceOf(this) != token.totalSupply()) throw;
-        if (token.balanceOf(this) != 10**9) throw;
+        if (token.balanceOf(this) != 10**18) throw;
 
         distributePreBuyersRewards(_preBuyers, _preBuyersTokens);
 
