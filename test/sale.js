@@ -397,7 +397,7 @@ contract(`Sale`, (accounts) => {
     );
     it(`should change the wallet address`, () =>
       new Promise((resolve, reject) => {
-        const newWallet = `0x0000000000000000000000000000000000000000`;
+        const newWallet = `0x0000000000000000000000000000000000000001`;
         Sale.deployed()
         .then((sale) => sale.changeWallet(newWallet, {from: owner}))
         .then(() => Sale.deployed())

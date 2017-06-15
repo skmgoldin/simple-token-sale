@@ -164,6 +164,7 @@ contract Sale {
 
     /// @dev purchaseToken(): function that exchanges ETH for ADT (main sale function)
     /// @notice You're about to purchase the equivalent of `msg.value` Wei in ADT tokens
+    // TODO: Add commments explaining edge cases, etc.
     function purchaseTokens()
         saleStarted
         payable
@@ -194,6 +195,7 @@ contract Sale {
     function changeOwner(address _newOwner)
         onlyOwner
     {
+        require(_newOwner != 0);
         owner = _newOwner;
     }
 
@@ -201,6 +203,7 @@ contract Sale {
         onlyOwner
         notFrozen
     {
+        require(_newPrice != 0);
         price = _newPrice;
     }
 
@@ -208,13 +211,16 @@ contract Sale {
         onlyOwner
         notFrozen
     {
+        require(_wallet != 0);
         wallet = _wallet;
     }
 
+    // Add validation to make sure the _newBlock isn't before the freeze block or anything crazy
     function changeStartBlock(uint _newBlock)
         onlyOwner
         notFrozen
     {
+        require(_newBlock != 0);
         startBlock = _newBlock;
     }
 
