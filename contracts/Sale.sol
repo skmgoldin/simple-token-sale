@@ -215,12 +215,13 @@ contract Sale {
         wallet = _wallet;
     }
 
-    // Add validation to make sure the _newBlock isn't before the freeze block or anything crazy
     function changeStartBlock(uint _newBlock)
         onlyOwner
         notFrozen
     {
         require(_newBlock != 0);
+
+        freezeBlock = _newBlock - (startBlock - freezeBlock);
         startBlock = _newBlock;
     }
 
