@@ -89,8 +89,8 @@ contract Sale {
         freezeBlock = _freezeBlock;
 
         require(token.transfer(this, token.totalSupply()));
-        if (token.balanceOf(this) != token.totalSupply()) throw;
-        if (token.balanceOf(this) != 10**18) throw;
+        require(token.balanceOf(this) == token.totalSupply());
+        require(token.balanceOf(this) == 10**18);
     }
 
     /// @dev distributeFoundersRewards(): private utility function called by constructor
