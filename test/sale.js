@@ -192,7 +192,7 @@ contract(`Sale`, (accounts) => {
         .then((sale) => sale.wallet.call())
         .then((wallet) =>
           resolve(
-            assert.equal(wallet.valueOf(), saleConf.wallet,
+            assert.equal(wallet.valueOf(), saleConf.wallet.toLowerCase(),
             `The wallet was not instantiated properly.`)
           )
         )
@@ -280,7 +280,7 @@ contract(`Sale`, (accounts) => {
         .then((sale) => sale.wallet.call())
         .then((wallet) =>
           resolve(
-            assert.equal(wallet.valueOf(), saleConf.wallet,
+            assert.equal(wallet.valueOf(), saleConf.wallet.toLowerCase(),
             `A non-owner was able to change the sale wallet`)
           )
         )
@@ -412,7 +412,7 @@ contract(`Sale`, (accounts) => {
         .then(() => Sale.deployed())
         .then((sale) => sale.wallet.call())
         .then((wallet) => {
-          const expectedValue = saleConf.wallet;
+          const expectedValue = saleConf.wallet.toLowerCase();
           assert.equal(wallet, expectedValue,
           `The owner was not able to change the wallet address to ${saleConf.wallet}`);
         })
