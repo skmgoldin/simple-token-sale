@@ -159,6 +159,7 @@ contract Sale {
             TransferredFoundersTokens(vault, tokensPerTranch);
         }
 
+        require(token.balanceOf(this) == 5 * 10**17);
         foundersTokensDisbursed = true;
     }
 
