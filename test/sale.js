@@ -489,19 +489,6 @@ contract(`Sale`, (accounts) => {
         .catch((err) => reject(err));
       })
     );
-    it(`should allow owner to purchase 1 token`, () =>
-      new Promise((resolve, reject) =>
-        purchaseToken(owner, new BN(`1`, 10))
-        .then(() => getTokenBalanceOf(owner))
-        .then((balance) =>
-          resolve(
-            assert.equal(balance.toString(10), `1`, `Owner was not able ` +
-            `to purchase tokens in the pre-sale period.`)
-          )
-        )
-        .catch((err) => reject(err))
-      )
-    );
   });
 
   describe(`Sale period 0`, () => {
@@ -909,7 +896,7 @@ contract(`Sale`, (accounts) => {
             .catch((err) => getTokenBalanceOf(foundersConf.founders[curr].address))
             .then((bal) => {
               const expectedBalance = foundersConf.founders[curr].amount.div(new BN(`2`, 10));
-              return assert.equal(expectedBalance.toString(10), bal.toString(10),
+              return assert.equal(bal.toString(10), expectedBalance.toString(10), 
                 `Founder was able to withdraw tokens before their vesting date.`);
             })
             .catch((err) => { throw new Error(err); });
@@ -947,7 +934,7 @@ contract(`Sale`, (accounts) => {
             .catch((err) => getTokenBalanceOf(foundersConf.founders[curr].address))
             .then((bal) => {
               const expectedBalance = foundersConf.founders[curr].amount;
-              return assert.equal(expectedBalance.toString(10), bal.toString(10),
+              return assert.equal(bal.toString(10), expectedBalance.toString(10), 
                 `Founder was able to withdraw tokens before their vesting date.`);
             })
             .catch((err) => { throw new Error(err); });

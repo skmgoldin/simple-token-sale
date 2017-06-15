@@ -33,7 +33,7 @@ contract Sale {
      */
 
     modifier saleStarted {
-        require(block.number >= startBlock || msg.sender == owner);
+        require(block.number >= startBlock);
         _;
     }
 
