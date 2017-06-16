@@ -48,12 +48,12 @@ contract Sale {
     }
 
     modifier setupComplete {
-        require(preSaleTokensDisbursed && foundersTokensDisbursed);
+        assert(preSaleTokensDisbursed && foundersTokensDisbursed);
         _;
     }
 
     modifier notInEmergency {
-        require(emergencyFlag == false);
+        assert(emergencyFlag == false);
         _;
     }
 
@@ -88,9 +88,9 @@ contract Sale {
         startBlock = _startBlock;
         freezeBlock = _freezeBlock;
 
-        require(token.transfer(this, token.totalSupply()));
-        require(token.balanceOf(this) == token.totalSupply());
-        require(token.balanceOf(this) == 10**18);
+        assert(token.transfer(this, token.totalSupply()));
+        assert(token.balanceOf(this) == token.totalSupply());
+        assert(token.balanceOf(this) == 10**18);
     }
 
     /// @dev distributeFoundersRewards(): private utility function called by constructor
@@ -155,11 +155,11 @@ contract Sale {
             // it access controls
             filter.setup(vault);             
             // Transfer to the vault the tokens it is to disburse
-            require(token.transfer(vault, tokensPerTranch));
+            assert(token.transfer(vault, tokensPerTranch));
             TransferredFoundersTokens(vault, tokensPerTranch);
         }
 
-        require(token.balanceOf(this) == 5 * 10**17);
+        assert(token.balanceOf(this) == 5 * 10**17);
         foundersTokensDisbursed = true;
     }
 
@@ -184,7 +184,7 @@ contract Sale {
 
         wallet.transfer(purchaseAmount);
 
-        require(token.transfer(msg.sender, tokenPurchase));
+        assert(token.transfer(msg.sender, tokenPurchase));
 
         PurchasedTokens(msg.sender, tokenPurchase);
     }
