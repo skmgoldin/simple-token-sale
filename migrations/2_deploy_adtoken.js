@@ -26,7 +26,7 @@ module.exports = (deployer, network, accounts) => {
   } else {
     saleConf = JSON.parse(fs.readFileSync(`./conf/sale.json`));
     tokenConf = JSON.parse(fs.readFileSync(`./conf/token.json`));
-    BuyersConf = JSON.parse(fs.readFileSync(`./conf/preBuyers.json`));
+    preBuyersConf = JSON.parse(fs.readFileSync(`./conf/preBuyers.json`));
     foundersConf = JSON.parse(fs.readFileSync(`./conf/founders.json`));
   }
 
