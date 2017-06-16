@@ -896,7 +896,7 @@ contract(`Sale`, (accounts) => {
             .catch((err) => getTokenBalanceOf(foundersConf.founders[curr].address))
             .then((bal) => {
               const expectedBalance = foundersConf.founders[curr].amount.div(new BN(`2`, 10));
-              return assert.equal(bal.toString(10), expectedBalance.toString(10), 
+              return assert.equal(bal.toString(10), expectedBalance.toString(10),
                 `Founder was able to withdraw tokens before their vesting date.`);
             })
             .catch((err) => { throw new Error(err); });
@@ -934,7 +934,7 @@ contract(`Sale`, (accounts) => {
             .catch((err) => getTokenBalanceOf(foundersConf.founders[curr].address))
             .then((bal) => {
               const expectedBalance = foundersConf.founders[curr].amount;
-              return assert.equal(bal.toString(10), expectedBalance.toString(10), 
+              return assert.equal(bal.toString(10), expectedBalance.toString(10),
                 `Founder was able to withdraw tokens before their vesting date.`);
             })
             .catch((err) => { throw new Error(err); });
