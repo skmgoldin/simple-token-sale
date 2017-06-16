@@ -4,15 +4,18 @@ const fs = require(`fs`);
 const BN = require(`bn.js`);
 
 module.exports = function(deployer, network, accounts) {
-    const saleConf = JSON.parse(fs.readFileSync(`./conf/sale.json`));
-    const tokenConf = JSON.parse(fs.readFileSync(`./conf/token.json`));
-    const preBuyersConf = JSON.parse(fs.readFileSync(`./conf/preBuyers.json`));
-    const foundersConf = JSON.parse(fs.readFileSync(`./conf/founders.json`));
+    let saleConf;
+    let tokenConf;
+    let preBuyersConf;
+    let foundersConf;
 
     if(network === `development`) {
+      saleConf = JSON.parse(fs.readFileSync(`./conf/testSale.json`));
+      tokenConf = JSON.parse(fs.readFileSync(`./conf/testToken.json`));
+      preBuyersConf = JSON.parse(fs.readFileSync(`./conf/testPreBuyers.json`));
+      foundersConf = JSON.parse(fs.readFileSync(`./conf/testFounders.json`));
+
       saleConf.owner = accounts[0];
-      saleConf.wallet = `0x000000000000000000000000000000000000dead`;
-      saleConf.prod = false;
       fs.writeFileSync(`./conf/sale.json`, JSON.stringify(saleConf, null, `  `));
 
       let i = 10; // We use addresses from 0-3 for actors in the tests.
@@ -20,14 +23,12 @@ module.exports = function(deployer, network, accounts) {
         foundersConf.founders[founder].address = accounts[i];
         i++;
       }
-      foundersConf.prod = false;
       fs.writeFileSync(`./conf/founders.json`, JSON.stringify(foundersConf, null, `  `));
-    }
-
-    if(network === `mainnet`) {
-      if(saleConf.prod === false || foundersConf.prod === false) {
-        throw new Error(`Sale conf file has prod flag set to false.`);
-      }
+    } else {
+      saleConf = JSON.parse(fs.readFileSync(`./conf/sale.json`));
+      tokenConf = JSON.parse(fs.readFileSync(`./conf/token.json`));
+      BuyersConf = JSON.parse(fs.readFileSync(`./conf/preBuyers.json`));
+      foundersConf = JSON.parse(fs.readFileSync(`./conf/founders.json`));
     }
 
     const preBuyers = [];

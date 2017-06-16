@@ -1,0 +1,37 @@
+{
+  "vestingDates": {
+    "first": "1530018000",
+    "second": "1545742800"
+  },
+  "founders": {
+    "consensys0": {
+      "amount": "105000000000000000",
+      "address": "0xEeBE00DDeb9579698Cf3f588AeCcbD636E233024"
+    },
+    "consensys1": {
+      "amount": "47500000000000000",
+      "address": "0xee9b1dfc22301dafd2d871ec7d5875aa68ce24f1"
+    },
+    "consensys2": {
+      "amount": "28500000000000000",
+      "address": "0xaae16812d6444d0698a4ad30b7722d8ea11bd0e3"
+    },
+    "consensys3": {
+      "amount": "19000000000000000",
+      "address": "0xa0d593b1f01cee7a6c148be93d703412a217e4d2"
+    },
+    "metax0": {
+      "amount": "135000000000000000",
+      "address": "0xfba2024bEbA7Df8B5cE8a413751027D11C0d5729"
+    },
+    "metax1": {
+      "amount": "55000000000000000",
+      "address": "0xd1fbd509fad0b88c18ae63d9409160dde0fd9cc4"
+    },
+    "metax2": {
+      "amount": "10000000000000000",
+      "address": "0x4f358f028249daf5d468a315c4d3a5487f932071"
+    }
+  },
+  "prod": false
+}
