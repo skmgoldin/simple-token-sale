@@ -15,14 +15,14 @@ module.exports = (deployer, network, accounts) => {
     foundersConf = JSON.parse(fs.readFileSync(`./conf/testFounders.json`));
 
     saleConf.owner = accounts[0];
-    fs.writeFileSync(`./conf/sale.json`, JSON.stringify(saleConf, null, `  `));
+    fs.writeFileSync(`./conf/testSale.json`, JSON.stringify(saleConf, null, `  `));
 
     let i = 10; // We use addresses from 0-3 for actors in the tests.
     for (founder in foundersConf.founders) {
       foundersConf.founders[founder].address = accounts[i];
       i += 1;
     }
-    fs.writeFileSync(`./conf/founders.json`, JSON.stringify(foundersConf, null, `  `));
+    fs.writeFileSync(`./conf/testFounders.json`, JSON.stringify(foundersConf, null, `  `));
   } else {
     saleConf = JSON.parse(fs.readFileSync(`./conf/sale.json`));
     tokenConf = JSON.parse(fs.readFileSync(`./conf/token.json`));

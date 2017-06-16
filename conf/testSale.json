@@ -1,8 +1,7 @@
 {
-  "owner": "0xfe1c969000c5d4e0462ffca0f91c7866e90bf8cb",
+  "owner": "0xc42252a5f7dc82b7a5a510ed31103feea58301b6",
   "wallet": "0xF36d081965A0DeeDCF65178261fe83CE29340292",
   "price": "2",
   "startBlock": "266",
-  "freezeBlock": "200",
-  "prod": false
+  "freezeBlock": "200"
 }

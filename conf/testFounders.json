@@ -6,32 +6,31 @@
   "founders": {
     "consensys0": {
       "amount": "105000000000000000",
-      "address": "0xEeBE00DDeb9579698Cf3f588AeCcbD636E233024"
+      "address": "0x577dd32813d855332d9fa92b222dc624c6a1897f"
     },
     "consensys1": {
       "amount": "47500000000000000",
-      "address": "0xee9b1dfc22301dafd2d871ec7d5875aa68ce24f1"
+      "address": "0xf71a1680487dfa87d541d20cfe2e05f2cb84d313"
     },
     "consensys2": {
       "amount": "28500000000000000",
-      "address": "0xaae16812d6444d0698a4ad30b7722d8ea11bd0e3"
+      "address": "0xd08e5b6da061a35424fb548be09f2286cc379a87"
     },
     "consensys3": {
       "amount": "19000000000000000",
-      "address": "0xa0d593b1f01cee7a6c148be93d703412a217e4d2"
+      "address": "0xb9993a59ed4d3fb625d595fb45d816fb5e8f1d22"
     },
     "metax0": {
       "amount": "135000000000000000",
-      "address": "0xfba2024bEbA7Df8B5cE8a413751027D11C0d5729"
+      "address": "0x1d8d5ec23e82d226d9f025baff085efdde9b5ca5"
     },
     "metax1": {
       "amount": "55000000000000000",
-      "address": "0xd1fbd509fad0b88c18ae63d9409160dde0fd9cc4"
+      "address": "0x0aeb666bd6dccd06022877c28a693e6d6d11f5ce"
     },
     "metax2": {
       "amount": "10000000000000000",
-      "address": "0x4f358f028249daf5d468a315c4d3a5487f932071"
+      "address": "0x2da15e8a6afd646c5758bd6f410aafc134c9cde0"
     }
-  },
-  "prod": false
+  }
 }

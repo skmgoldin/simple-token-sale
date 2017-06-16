@@ -11,10 +11,10 @@ const ethRPC = new EthRPC(new HttpProvider(`http://localhost:8545`));
 const ethQuery = new EthQuery(new HttpProvider(`http://localhost:8545`));
 
 contract(`Sale`, (accounts) => {
-  const preBuyersConf = JSON.parse(fs.readFileSync(`./conf/preBuyers.json`));
-  const foundersConf = JSON.parse(fs.readFileSync(`./conf/founders.json`));
-  const saleConf = JSON.parse(fs.readFileSync(`./conf/sale.json`));
-  const tokenConf = JSON.parse(fs.readFileSync(`./conf/token.json`));
+  const preBuyersConf = JSON.parse(fs.readFileSync(`./conf/testPreBuyers.json`));
+  const foundersConf = JSON.parse(fs.readFileSync(`./conf/testFounders.json`));
+  const saleConf = JSON.parse(fs.readFileSync(`./conf/testSale.json`));
+  const tokenConf = JSON.parse(fs.readFileSync(`./conf/testToken.json`));
   const [owner, james, miguel, edwhale] = accounts;
 
   let tokensForSale;
