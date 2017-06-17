@@ -3,6 +3,8 @@ import "./Disbursement.sol";
 
 contract Filter {
 
+    event SetupAllowance(address indexed beneficiary, uint amount);
+
     Disbursement public disburser;
     address public owner;
     mapping(address => Beneficiary) public beneficiaries;
@@ -27,6 +29,8 @@ contract Filter {
                 claimAmount: _beneficiaryTokens[i],
                 claimed: false
             });
+            SetupAllowance(_beneficiaries[i],
+                           beneficiaries[_beneficiaries[i]].claimAmount);
         }
     }
 
