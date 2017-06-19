@@ -103,7 +103,7 @@ contract Sale {
         public
         onlyOwner
     { 
-        require(!preSaleTokensDisbursed);
+        assert(!preSaleTokensDisbursed);
 
         for(uint i = 0; i < _preBuyers.length; i++) {
             require(token.transfer(_preBuyers[i], _preBuyersTokens[i]));
@@ -125,8 +125,8 @@ contract Sale {
         public
         onlyOwner
     { 
-        require(preSaleTokensDisbursed);
-        require(!foundersTokensDisbursed);
+        assert(preSaleTokensDisbursed);
+        assert(!foundersTokensDisbursed);
 
         /* Total number of tokens to be disbursed for a given tranch. Used when
            tokens are transferred to disbursement contracts. */
