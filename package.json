@@ -9,7 +9,7 @@
   "author": "Mike Goldin <mike.goldin@consensys.net>",
   "license": "ISC",
   "dependencies": {
-    "AWS-SDK": "2.9.0",
+    "aws-sdk": "2.9.0",
     "bip39": "2.3.1",
     "bn.js": "4.11.6",
     "ethereumjs-wallet": "0.6.0",
