@@ -1,4 +1,4 @@
-pragma solidity 0.4.11;
+pragma solidity ^0.4.11;
 import "./HumanStandardToken.sol";
 import "./Disbursement.sol";
 import "./Filter.sol";
