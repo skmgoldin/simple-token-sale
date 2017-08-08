@@ -1,7 +1,7 @@
 {
   "name": "tokenlaunch",
   "version": "0.0.1",
-  "description": "Public sale contract for AdToken",
+  "description": "Contracts for fixed-price, finite-supply token sales.",
   "scripts": {
     "test": "test",
     "lint": "eslint --fix"
