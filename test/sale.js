@@ -59,16 +59,20 @@ contract(`Sale`, (accounts) => {
     return foundersTokens;
   }
 
-  function getFilter(index) {
-    return Sale.deployed()
-    .then((sale) => sale.filters.call(index))
-    .then((filterAddr) => Filter.at(filterAddr));
+  async function getFilter(index) {
+    const sale = await Sale.deployed()
+    const filterAddr = await sale.filters.call(index)
+    return Filter.at(filterAddr)
   }
 
   function getFoundersAddresses() {
     return getFounders().map((curr, i, arr) =>
       foundersConf.founders[curr].address
     );
+  }
+
+  function isEVMException(err) {
+    return err.toString().includes(`invalid opcode`)
   }
 
   function getFounders() {
@@ -841,105 +845,91 @@ contract(`Sale`, (accounts) => {
   });
 
   describe(`Filters and disbursers`, () => {
-    it(`Should not allow founders to withdraw tokens before the vesting date`, () =>
-      Promise.all(getFoundersAddresses().map((curr, i, arr) =>
-        getFilter(0)
-        .then((filter) => filter.claim({from: curr}))
-        .then(() => {
-          throw new Error(`Founder was able to withdraw tokens ` +
-          `before their vesting date.`);
-        })
-        .catch((err) => getTokenBalanceOf(curr))
-        .then((bal) => {
-          const expectedBalance = new BN(`0`, 10);
-          return assert.equal(expectedBalance.toString(10), bal.toString(10),
-            `Founder was able to withdraw tokens before their vesting date.`);
-        })
-        .then(() => getFilter(1))
-        .then((filter) => filter.claim({from: curr}))
-        .then(() => {
-          throw new Error(`Founder was able to withdraw tokens ` +
-          `before their vesting date.`);
-        })
-        .catch((err) => getTokenBalanceOf(curr))
-        .then((bal) => {
-          const expectedBalance = new BN(`0`, 10);
-          return assert.equal(expectedBalance.toString(10), bal.toString(10),
-            `Founder was able to withdraw tokens before their vesting date.`);
-        })
-        .catch((err) => { throw new Error(err); })
-      ))
+    const earlyAccessFailure = 'Founder was able to withdraw from a filter ' +
+      'earlier than should have been possible'
+    const doubleAccessFailure = 'Founder was able to withdraw from a filter ' +
+      'they had already withdrawn from'
+    const balanceFailure = 'The founder\'s balance was not as expected after ' +
+      'interacting with a filter'
+
+    it(`Should not allow founders to withdraw tokens before the vesting date`, async () =>
+      await Promise.all(getFoundersAddresses().map(async (founder, i, arr) => {
+        const firstFilter = await getFilter(0)
+        const secondFilter = await getFilter(1)
+        try {
+          await firstFilter.claim({from: founder})
+          await secondFilter.claim({from: founder})
+          assert(false, earlyAccessFailure)
+        } catch(err) {
+          assert(isEVMException(err))
+        }
+        const founderBalance = await getTokenBalanceOf(founder)
+        const expectedBalance = new BN(`0`, 10)
+        assert.equal(expectedBalance.toString(10), founderBalance.toString(10),
+          balanceFailure);
+      }))
     );
     it(`Should allow founders to withdraw from the first tranch after that ` +
        `vesting date`, () =>
-      new Promise((resolve, reject) => {
+      new Promise((resolve) => {
         ethRPC.sendAsync({
           method: `evm_increaseTime`,
           params: [34190000] // 13 months in seconds
-        }, (err) =>
-          resolve(Promise.all(getFounders().map((curr, i, arr) => {
-            if (err) { throw new Error(err); }
-            return getFilter(0)
-            .then((filter) => filter.claim({from: foundersConf.founders[curr].address}))
-            .then(() => getTokenBalanceOf(foundersConf.founders[curr].address))
-            .then((bal) => {
-              const expectedBalance = foundersConf.founders[curr].amount.div(new BN(`2`, 10));
-              return assert.equal(expectedBalance.toString(10), bal.toString(10),
-                `Founder was not able to withdraw tokens at their vesting date.`);
+        }, async (err) => {
+          if (err) { throw err; }
+          await Promise.all(
+            getFounders().map(async (curr, i, arr) => {
+              const founder = foundersConf.founders[curr].address
+              const firstFilter = await getFilter(0);
+              await firstFilter.claim({from: founder})
+              const foundersBalance = await getTokenBalanceOf(founder)
+              const expectedBalance = foundersConf.founders[curr].amount
+                                      .div(new BN(`2`, 10))
+              assert.equal(foundersBalance.toString(10),
+                           expectedBalance.toString(10),
+                           balanceFailure)
+              const secondFilter = await getFilter(1);
+              try {
+                await secondFilter.claim({from: founder})
+                assert(false, earlyAccessFailure)
+              } catch(err) {
+                assert(isEVMException(err))
+              }
             })
-            .then(() => getFilter(1))
-            .then((filter) => filter.claim({from: foundersConf.founders[curr].address}))
-            .then(() => {
-              throw new Error(`Founder was able to withdraw tokens ` +
-              `before their vesting date.`);
-            })
-            .catch((err) => getTokenBalanceOf(foundersConf.founders[curr].address))
-            .then((bal) => {
-              const expectedBalance = foundersConf.founders[curr].amount.div(new BN(`2`, 10));
-              return assert.equal(bal.toString(10), expectedBalance.toString(10),
-                `Founder was able to withdraw tokens before their vesting date.`);
-            })
-            .catch((err) => { throw new Error(err); });
-          })))
-        );
+          )
+          resolve()
+        })
       })
     );
     it(`Should allow founders to withdraw from the second tranch after that ` +
-       `vesting date`, () =>
-      new Promise((resolve, reject) => {
+       `vesting date`, () => 
+      new Promise((resolve) => {
         ethRPC.sendAsync({
           method: `evm_increaseTime`,
           params: [18410000] // 7 months in seconds
-        }, (err) =>
-          resolve(Promise.all(getFounders().map((curr, i, arr) => {
-            if (err) { throw new Error(err); }
-            return getFilter(0)
-            .then((filter) => filter.claim({from: foundersConf.founders[curr].address}))
-            .then(() => {
-              throw new Error(`Founder was able to withdraw tokens ` +
-              `which should not exist.`);
+        }, async (err) => {
+          if (err) { throw err; }
+          await Promise.all(
+            getFounders().map(async (curr, i, arr) => {
+              const founder = foundersConf.founders[curr].address
+              const firstFilter = await getFilter(0);
+              try {
+                await firstFilter.claim({from: founder})
+                assert(false, doubleAccessFailure)
+              } catch(err) {
+                assert(isEVMException(err))
+              }
+              const secondFilter = await getFilter(1);
+              await secondFilter.claim({from: founder})
+              const foundersBalance = await getTokenBalanceOf(founder)
+              const expectedBalance = foundersConf.founders[curr].amount
+              assert.equal(foundersBalance.toString(10),
+                           expectedBalance.toString(10),
+                           balanceFailure)
             })
-            .catch((err) => getTokenBalanceOf(foundersConf.founders[curr].address))
-            .then((bal) => {
-              const expectedBalance = foundersConf.founders[curr].amount.div(new BN(`2`, 10));
-              return assert.equal(expectedBalance.toString(10), bal.toString(10),
-                `Founder was not able to withdraw tokens at their vesting date.`);
-            })
-            .then(() => getFilter(1))
-            .then((filter) => filter.claim({from: foundersConf.founders[curr].address}))
-            .then(() => {
-              throw new Error(`Founder was able to withdraw tokens ` +
-              `before their vesting date.`);
-            })
-            .catch((err) => getTokenBalanceOf(foundersConf.founders[curr].address))
-            .then((bal) => {
-              const expectedBalance = foundersConf.founders[curr].amount;
-              return assert.equal(bal.toString(10), expectedBalance.toString(10),
-                `Founder was able to withdraw tokens before their vesting date.`);
-            })
-            .catch((err) => { throw new Error(err); });
-          })))
-        );
+          )
+          resolve()
+        })
       })
     );
   });
