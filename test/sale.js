@@ -23,20 +23,18 @@ contract(`Sale`, (accounts) => {
    * Utility Functions
    */
 
-  function purchaseToken(actor, amount) {
+  async function purchaseToken(actor, amount) {
     if (!BN.isBN(amount)) { throw new Error(`Supplied amount is not a BN.`); }
-    return Sale.deployed()
-    .then((sale) => sale.purchaseTokens(
-      {from: actor, value: amount.mul(saleConf.price)}));
+    const sale = await Sale.deployed()
+    await sale.purchaseTokens({from: actor, value: amount.mul(saleConf.price)})
   }
 
-  function getTokenBalanceOf(actor) {
-    return Sale.deployed()
-    .then((sale) => sale.token.call())
-    .then((tokenAddr) => HumanStandardToken.at(tokenAddr))
-    .then((token) => token.balanceOf.call(actor))
-    .then((balance) => new BN(balance.valueOf(), 10))
-    .catch((err) => { throw new Error(err); });
+  async function getTokenBalanceOf(actor) {
+    const sale = await Sale.deployed()
+    const tokenAddr = await sale.token.call()
+    const token = HumanStandardToken.at(tokenAddr)
+    const balance = await token.balanceOf.call(actor)
+    return new BN(balance.toString(10), 10)
   }
 
   function totalPreSoldTokens() {
@@ -80,21 +78,19 @@ contract(`Sale`, (accounts) => {
   }
 
   function forceMine(blockToMine) {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       if (!BN.isBN(blockToMine)) {
         reject(`Supplied block number must be a BN.`);
       }
-      return ethQuery.blockNumber()
-      .then((blockNumber) => {
-        if (new BN(blockNumber, 10).lt(blockToMine)) {
-          ethRPC.sendAsync({method: `evm_mine`}, (err) => {
-            if (err !== undefined && err !== null) { reject(err); }
-            resolve(forceMine(blockToMine));
-          });
-        } else {
-          resolve();
-        }
-      });
+      const blockNumber = await ethQuery.blockNumber()
+      if (blockNumber.lt(blockToMine)) {
+        ethRPC.sendAsync({method: `evm_mine`}, (err) => {
+          if (err !== undefined && err !== null) { reject(err); }
+          resolve(forceMine(blockToMine));
+        });
+      } else {
+        resolve();
+      }
     });
   }
 
