@@ -858,11 +858,17 @@ contract(`Sale`, (accounts) => {
         const secondFilter = await getFilter(1)
         try {
           await firstFilter.claim({from: founder})
+          assert(false, earlyAccessFailure)
+        } catch(err) {
+          assert(isEVMException(err))
+        }
+        try {
           await secondFilter.claim({from: founder})
           assert(false, earlyAccessFailure)
         } catch(err) {
           assert(isEVMException(err))
         }
+
         const founderBalance = await getTokenBalanceOf(founder)
         const expectedBalance = new BN(`0`, 10)
         assert.equal(expectedBalance.toString(10), founderBalance.toString(10),
