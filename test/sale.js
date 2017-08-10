@@ -19,6 +19,9 @@ contract(`Sale`, (accounts) => {
 
   let tokensForSale;
 
+
+  const unexpectedError = `An unexpected error occurred`
+
   /*
    * Utility Functions
    */
@@ -192,7 +195,6 @@ contract(`Sale`, (accounts) => {
   describe(`Owner-only functions`, () => {
     const nonOwnerAccessError = `A non-owner was able to`
     const ownerAccessError = `An owner was unable able to`
-    const unexpectedError = `An unexpected error occurred`
     it(`should not allow a non-owner to change the price.`, async () => {
       const sale = await Sale.deployed()
       try {
@@ -307,27 +309,24 @@ contract(`Sale`, (accounts) => {
   });
 
   describe(`Pre-sale period`, () => {
-    it(`should reject a purchase from James.`, () =>
-      new Promise((resolve, reject) => {
-        let startingBalance;
-
-        getTokenBalanceOf(james)
-        .then((balance) => { startingBalance = balance; })
-        .then(() => purchaseToken(james, new BN(`420`, 10)))
-        .then(() =>
-          reject(`James was able to purchase tokens when he ` +
-          `should not have been able to.`)
-        )
-        .catch((err) => getTokenBalanceOf(james))
-        .then((balance) =>
-          resolve(
-            assert.equal(balance.toString(10), startingBalance.toString(10),
-            `James was able to purchase tokens in the pre-sale period.`)
-          )
-        )
-        .catch((err) => reject(err));
-      })
-    );
+    const earlyPurchaseError = ` was able to purchase tokens early`
+    it(`should reject a purchase from James.`, async () => {
+      const startingBalance = await getTokenBalanceOf(james)
+      try {
+        await purchaseToken(james, new BN(`420`, 10))
+        const errMsg = james + earlyPurchaseError 
+        assert(false, errMsg)
+      } catch(err) {
+        const errMsg = unexpectedError  
+        assert(isEVMException(err), errMsg)
+      }
+      const finalBalance = await getTokenBalanceOf(james)
+      const expected = startingBalance
+      const errMsg = james + earlyPurchaseError
+      assert.equal(
+        startingBalance.toString(10), finalBalance.toString(10), errMsg
+      )
+    });
   });
 
   describe(`Sale period 0`, () => {
