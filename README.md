@@ -1,4 +1,5 @@
 # Simple Token Launch
+[ ![Codeship Status for skmgoldin/simple-token-launch](https://app.codeship.com/projects/5392ad30-6041-0135-6b30-4614bcb67ade/status?branch=master)](https://app.codeship.com/projects/239399)
 This codebase can be used to deploy fixed-price, finite-supply token sales. It uses json conf files to specify sale parameters, supports token distributions for pre-sale buyers, and the distribution of timelocked tokens for founders. It also includes a comprehensive test suite.
 
 # Initialize
