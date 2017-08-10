@@ -330,100 +330,59 @@ contract(`Sale`, (accounts) => {
   });
 
   describe(`Sale period 0`, () => {
-    before(() =>
-      new Promise((resolve, reject) =>
-        forceMine(saleConf.startBlock)
-        .then(() => resolve())
-        .catch((err) => reject(err))
-      )
+    const balanceError = `A balance was not as expected following a purchase`
+
+    before(async () =>
+      await forceMine(saleConf.startBlock)
     );
 
-    it(`should not allow the owner to change the price`, () =>
-      new Promise((resolve, reject) =>
-        Sale.deployed()
-        .then((sale) => sale.changePrice(new BN(`420`, 10)))
-        .then(() =>
-          reject(`The owner was able to change the price after the freeze block.`)
-        )
-        .catch(() => Sale.deployed())
-        .then((sale) => sale.price.call())
-        .then((res) =>
-          resolve(
-            assert.equal(res.toString(10), saleConf.price.toString(10),
-            `The owner was able to change the price after the freeze block.`)
-          )
-        )
-        .catch((err) => reject(err))
-      )
-    );
-    it(`should transfer 1 token to James.`, () =>
-      new Promise((resolve, reject) => {
-        let startingBalance;
-        const purchaseAmount = new BN(`1`, 10);
-
-        getTokenBalanceOf(james)
-        .then((balance) => { startingBalance = balance; })
-        .then(() => purchaseToken(james, purchaseAmount))
-        .then(() => getTokenBalanceOf(james))
-        .then((balance) => {
-          const expectedValue = startingBalance.add(purchaseAmount);
-          resolve(
-            assert.equal(balance.toString(10), expectedValue.toString(10),
-            `James was not able to purchase tokens in the sale period.`)
-          );
-        })
-        .catch((err) => reject(err));
-      })
-    );
-    it(`should transfer 10 tokens to Miguel.`, () =>
-      new Promise((resolve, reject) => {
-        let startingBalance;
-        const purchaseAmount = new BN(`10`, 10);
-
-        getTokenBalanceOf(miguel)
-        .then((balance) => { startingBalance = balance; })
-        .then(() => purchaseToken(miguel, purchaseAmount))
-        .then(() => getTokenBalanceOf(miguel))
-        .then((balance) => {
-          const expectedValue = startingBalance.add(purchaseAmount);
-          resolve(
-            assert.equal(balance.toString(10), expectedValue.toString(10),
-            `Miguel was not able to purchase tokens in the sale period.`)
-          );
-        })
-        .catch((err) => reject(err));
-      })
-    );
-    it(`should transfer 100 tokens to Edwhale.`, () =>
-      new Promise((resolve, reject) => {
-        let startingBalance;
-        const purchaseAmount = new BN(`100`, 10);
-
-        getTokenBalanceOf(edwhale)
-        .then((balance) => { startingBalance = balance; })
-        .then(() => purchaseToken(edwhale, purchaseAmount))
-        .then(() => getTokenBalanceOf(edwhale))
-        .then((balance) => {
-          const expectedValue = startingBalance.add(purchaseAmount);
-          resolve(
-            assert.equal(balance.toString(10), expectedValue.toString(10),
-            `Edwhale was not able to purchase tokens in the sale period.`)
-          );
-        })
-        .catch((err) => reject(err));
-      })
-    );
+    it(`should not allow the owner to change the price`, async () => {
+      const sale = await Sale.deployed()
+      try {
+        await as(owner, sale.changePrice, saleConf.price + 1)
+      } catch(err) {
+        const errMsg = unexpectedError
+        assert(isEVMException(err), errMsg)
+      }
+      const price = await sale.price.call()
+      const expected = saleConf.price
+      const errMsg = `The owner was able to change the price after the freeze block`
+      assert.strictEqual(price.toString(10), expected.toString(10), errMsg)
+    });
+    it(`should transfer 1 token to James.`, async () => {
+      const startingBalance = await getTokenBalanceOf(james)
+      const purchaseAmount = new BN(`1`, 10);
+      await purchaseToken(james, purchaseAmount)
+      const finalBalance = await getTokenBalanceOf(james)
+      const expected = startingBalance.add(purchaseAmount)
+      const errMsg = balanceError
+      assert.equal(finalBalance.toString(10), expected.toString(10), errMsg)
+    });
+    it(`should transfer 10 tokens to Miguel.`, async () => {
+      const startingBalance = await getTokenBalanceOf(miguel)
+      const purchaseAmount = new BN(`10`, 10);
+      await purchaseToken(miguel, purchaseAmount)
+      const finalBalance = await getTokenBalanceOf(miguel)
+      const expected = startingBalance.add(purchaseAmount)
+      const errMsg = balanceError
+      assert.equal(finalBalance.toString(10), expected.toString(10), errMsg)
+    })
+    it(`should transfer 100 tokens to Edwhale.`, async () => {
+      const startingBalance = await getTokenBalanceOf(edwhale)
+      const purchaseAmount = new BN(`10`, 10);
+      await purchaseToken(edwhale, purchaseAmount)
+      const finalBalance = await getTokenBalanceOf(edwhale)
+      const expected = startingBalance.add(purchaseAmount)
+      const errMsg = balanceError
+      assert.equal(finalBalance.toString(10), expected.toString(10), errMsg)
+    })
   });
 
   describe(`Emergency stop`, () => {
-    before(() =>
-      new Promise((resolve, reject) =>
-        Sale.deployed()
-        .then((sale) => sale.emergencyToggle({from: owner}))
-        .then(() => resolve())
-        .catch((err) => reject(err))
-      )
-    );
+    before(async () => {
+      const sale = await Sale.deployed()
+      await as(owner, sale.emergencyToggle)
+    });
     it(`should not transfer 1 token to James.`, () => {
       new Promise((resolve, reject) => {
         let startingBalance;
