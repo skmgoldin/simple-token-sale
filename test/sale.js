@@ -267,139 +267,43 @@ contract(`Sale`, (accounts) => {
       assert.strictEqual(owner, expected, errMsg)
       await as(miguel, sale.changeOwner, saleConf.owner)
     })
-
-    it(`should not allow miguel to change the price.`, () =>
-      new Promise((resolve, reject) =>
-        Sale.deployed()
-        .then((sale) => sale.changePrice(saleConf.price.add(1), {from: miguel}))
-        .then(() => reject(`A non-owner was able to change the sale price`))
-        .catch((err) => Sale.deployed())
-        .then((sale) => sale.price.call())
-        .then((price) =>
-          resolve(
-            assert.equal(price.toString(10),
-            saleConf.price.toString(10),
-            `A non-owner was able to change the sale price`)
-          )
-        )
-        .catch((err) => reject(err))
-      )
-    );
-    it(`should change the price to 2666.`, () =>
-      new Promise((resolve, reject) =>
-        Sale.deployed()
-        .then((sale) => sale.changePrice(new BN(`2666`, 10), {from: owner}))
-        .then(() => Sale.deployed())
-        .then((sale) => sale.price.call())
-        .then((price) =>
-          resolve(
-            assert.equal(price.toString(10), `2666`,
-            `The owner was not able to change the price`)
-          )
-        )
-        .catch((err) => reject(err))
-      )
-    );
-    it(`should change the startBlock to 2666.`, () =>
-      new Promise((resolve, reject) =>
-        Sale.deployed()
-        .then((sale) => sale.changeStartBlock(new BN(`2666`, 10), {from: owner}))
-        .then(() => Sale.deployed())
-        .then((sale) => sale.startBlock.call())
-        .then((startBlock) =>
-          resolve(
-            assert.equal(startBlock.toString(10), `2666`,
-            `The owner was not able to change the sale startBlock`)
-          )
-        )
-        .catch((err) => reject(err))
-      )
-    );
-    it(`should change the startBlock to ${saleConf.startBlock}.`, () =>
-      new Promise((resolve, reject) =>
-        Sale.deployed()
-        .then((sale) => sale.changeStartBlock(saleConf.startBlock, {from: owner}))
-        .then(() => Sale.deployed())
-        .then((sale) => sale.startBlock.call())
-        .then((startBlock) =>
-          resolve(
-            assert.equal(startBlock.toString(10), saleConf.startBlock,
-            `The owner was not able to change the sale startBlock`)
-          )
-        )
-        .catch((err) => reject(err))
-      )
-    );
-    it(`should change the wallet address`, () =>
-      new Promise((resolve, reject) => {
-        const newWallet = `0x0000000000000000000000000000000000000001`;
-        Sale.deployed()
-        .then((sale) => sale.changeWallet(newWallet, {from: owner}))
-        .then(() => Sale.deployed())
-        .then((sale) => sale.wallet.call())
-        .then((wallet) => {
-          const expectedValue = newWallet;
-          assert.equal(wallet, expectedValue,
-          `The owner was not able to change the wallet address to 0`);
-        })
-        .then(() => Sale.deployed())
-        .then((sale) => sale.changeWallet(saleConf.wallet, {from: owner}))
-        .then(() => Sale.deployed())
-        .then((sale) => sale.wallet.call())
-        .then((wallet) => {
-          const expectedValue = saleConf.wallet.toLowerCase();
-          assert.equal(wallet, expectedValue,
-          `The owner was not able to change the wallet address to ${saleConf.wallet}`);
-        })
-        .then(() => resolve())
-        .catch((err) => reject(err));
-      })
-    );
-    it(`should activate the emergencyFlag.`, () =>
-      new Promise((resolve, reject) =>
-        Sale.deployed()
-        .then((sale) => sale.emergencyToggle({from: owner}))
-        .then(() => Sale.deployed())
-        .then((sale) => sale.emergencyFlag.call())
-        .then((res) =>
-          resolve(
-            assert.equal(res.valueOf(), true,
-            `The owner was not able to activate the emergencyFlag`)
-          )
-        )
-        .catch((err) => reject(err))
-      )
-    );
-    it(`should deactivate the emergencyFlag.`, () =>
-      new Promise((resolve, reject) =>
-        Sale.deployed()
-        .then((sale) => sale.emergencyToggle({from: owner}))
-        .then(() => Sale.deployed())
-        .then((sale) => sale.emergencyFlag.call())
-        .then((res) =>
-          resolve(
-            assert.equal(res.valueOf(), false,
-            `The owner was not able to deactivate the emergencyFlag`)
-          )
-        )
-        .catch((err) => reject(err))
-      )
-    );
-    it(`should change the price back to ${saleConf.price}.`, () =>
-      new Promise((resolve, reject) =>
-        Sale.deployed()
-        .then((sale) => sale.changePrice(saleConf.price, {from: owner}))
-        .then(() => Sale.deployed())
-        .then((sale) => sale.price.call())
-        .then((price) =>
-          resolve(
-            assert.equal(price.valueOf(), saleConf.price,
-            `The owner was not able to change the sale price`)
-          )
-        )
-        .catch((err) => reject(err))
-      )
-    );
+    it(`should change the price to 2666.`, async () => {
+      const sale = await Sale.deployed()
+      await as(owner, sale.changePrice, 2666)
+      const price = await sale.price.call()
+      const expected = 2666 
+      const errMsg = ownerAccessError + ` change the price`
+      assert.strictEqual(price.toString(10), expected.toString(10), errMsg)
+      await as(owner, sale.changePrice, saleConf.price)
+    })
+    it(`should change the startBlock to 2666.`, async () => {
+      const sale = await Sale.deployed()
+      await as(owner, sale.changeStartBlock, 2666)
+      const price = await sale.startBlock.call()
+      const expected = 2666 
+      const errMsg = ownerAccessError + ` change the start block`
+      assert.strictEqual(price.toString(10), expected.toString(10), errMsg)
+      await as(owner, sale.changeStartBlock, saleConf.startBlock)
+    })
+    it(`should change the wallet address`, async () => {
+      const newWallet = `0x0000000000000000000000000000000000000001`;
+      const sale = await Sale.deployed()
+      await as(owner, sale.changeWallet, newWallet)
+      const wallet = await sale.wallet.call()
+      const expected = newWallet
+      const errMsg = ownerAccessError + ` change the wallet address`
+      assert.equal(wallet, expected, errMsg) 
+      await as(owner, sale.changeWallet, saleConf.wallet)
+    })
+    it(`should activate the emergencyFlag.`, async () => {
+      const sale = await Sale.deployed()
+      await as(owner, sale.emergencyToggle)
+      const emergencyFlag = await sale.emergencyFlag.call()
+      const expected = true 
+      const errMsg = ownerAccessError + ` set the emergency toggle`
+      assert.equal(emergencyFlag.valueOf(), expected, errMsg)
+      await as(owner, sale.emergencyToggle)
+    });
   });
 
   describe(`Pre-sale period`, () => {
