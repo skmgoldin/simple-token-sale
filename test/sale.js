@@ -42,7 +42,6 @@ contract(`Sale`, (accounts) => {
     Object.keys(preBuyersConf).map((curr, i, arr) => {
       preBuyersConf[curr].amount = new BN(preBuyersConf[curr].amount, 10);
       tokensPreSold = tokensPreSold.add(preBuyersConf[curr].amount);
-      return null;
     });
     return tokensPreSold;
   }
@@ -52,7 +51,6 @@ contract(`Sale`, (accounts) => {
     getFounders().map((curr, i, arr) => {
       foundersConf.founders[curr].amount = new BN(foundersConf.founders[curr].amount, 10);
       foundersTokens = foundersTokens.add(foundersConf.founders[curr].amount);
-      return null;
     });
     return foundersTokens;
   }
