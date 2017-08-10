@@ -92,24 +92,18 @@ contract(`Sale`, (accounts) => {
     });
   }
 
-  function detectSendObject(...args) {
-    if(typeof(args[args.length - 1]) === Object) {
-      return args[args.length - 1]
-    } else {
-      return {}
+  function as(actor, fn, ...args) {
+    let sendObject = detectSendObject(args)
+    sendObject.from = actor
+    return fn(...args, sendObject)
+
+    function detectSendObject(...args) {
+      if(typeof(args[args.length - 1]) === Object) {
+        return args[args.length - 1]
+      } else {
+        return {}
+      }
     }
-  }
-
-  function asOwner(fn, ...args) {
-    let sendObject = detectSendObject(args)
-    sendObject.from = owner
-    return fn(...args, sendObject) 
-  }
-
-  function notAsOwner(fn, ...args) {
-    let sendObject = detectSendObject(args)
-    sendObject.from = james
-    return fn(...args, sendObject) 
   }
 
   before(() => {
@@ -197,12 +191,12 @@ contract(`Sale`, (accounts) => {
 
   describe(`Owner-only functions`, () => {
     const nonOwnerAccessError = `A non-owner was able to`
-    const ownerAccessError = `The owner was unable to`
+    const ownerAccessError = `An owner was unable able to`
     const unexpectedError = `An unexpected error occurred`
     it(`should not allow a non-owner to change the price.`, async () => {
       const sale = await Sale.deployed()
       try {
-        await notAsOwner(sale.changePrice, saleConf.price + 1)
+        await as(james, sale.changePrice, saleConf.price + 1)
       } catch(err) {
         const errMsg = unexpectedError
         assert(isEVMException(err), errMsg)
@@ -215,7 +209,7 @@ contract(`Sale`, (accounts) => {
     it(`should not allow a non-owner to change the startBlock.`, async () => {
       const sale = await Sale.deployed()
       try {
-        await notAsOwner(sale.startBlock, saleConf.startBlock + 1)
+        await as(james, sale.startBlock, saleConf.startBlock + 1)
       } catch(err) {
         const errMsg = unexpectedError
         assert(isEVMException(err), errMsg)
@@ -225,10 +219,10 @@ contract(`Sale`, (accounts) => {
       const errMsg = nonOwnerAccessError + ` change the start block`
       assert.strictEqual(startBlock.toString(10), expected.toString(10), errMsg)
     })
-    it(`should not allow a non-owner to change the owner.`, async () => {
+    it(`should not allow a non-owner to change the owner`, async () => {
       const sale = await Sale.deployed()
       try {
-        await notAsOwner(sale.owner, james)
+        await as(james, sale.owner, james)
       } catch(err) {
         const errMsg = unexpectedError
         assert(isEVMException(err), errMsg)
@@ -238,10 +232,10 @@ contract(`Sale`, (accounts) => {
       const errMsg = nonOwnerAccessError + ` change the owner`
       assert.strictEqual(owner.toString(), expected.toString(), errMsg)
     });
-    it(`should not allow a non-owner to change the wallet.`, async () => {
+    it(`should not allow a non-owner to change the wallet`, async () => {
       const sale = await Sale.deployed()
       try {
-        await notAsOwner(sale.wallet, james)
+        await as(james, sale.wallet, james)
       } catch(err) {
         const errMsg = unexpectedError
         assert(isEVMException(err), errMsg)
@@ -251,10 +245,10 @@ contract(`Sale`, (accounts) => {
       const errMsg = nonOwnerAccessError + ` change the wallet`
       assert.strictEqual(wallet.toString(), expected.toLowerCase(), errMsg)
     })
-    it(`should not allow a non-owner to activate the emergencyToggle.`, async () => {
+    it(`should not allow a non-owner to activate the emergencyToggle`, async () => {
       const sale = await Sale.deployed()
       try {
-        await notAsOwner(sale.emergencyToggle)
+        await as(james, sale.emergencyToggle)
       } catch(err) {
         const errMsg = unexpectedError
         assert(isEVMException(err), errMsg)
@@ -264,36 +258,16 @@ contract(`Sale`, (accounts) => {
       const errMsg = nonOwnerAccessError + ` change the emergencyToggle`
       assert.strictEqual(emergencyFlag, expected, errMsg)
     })
-    it(`should change the owner to miguel.`, () =>
-      new Promise((resolve, reject) =>
-        Sale.deployed()
-        .then((sale) => sale.changeOwner(miguel, {from: owner}))
-        .then(() => Sale.deployed())
-        .then((sale) => sale.owner.call())
-        .then((owner) =>
-          resolve(
-            assert.equal(owner.valueOf(), miguel,
-            `The owner was not able to change the owner`)
-          )
-        )
-        .catch((err) => reject(err))
-      )
-    );
-    it(`should change the owner back to owner.`, () =>
-      new Promise((resolve, reject) =>
-        Sale.deployed()
-        .then((sale) => sale.changeOwner(owner, {from: miguel}))
-        .then(() => Sale.deployed())
-        .then((sale) => sale.owner.call())
-        .then((owner) =>
-          resolve(
-            assert.equal(owner.valueOf(), owner,
-            `The owner was not able to change the owner`)
-          )
-        )
-        .catch((err) => reject(err))
-      )
-    );
+    it(`should change the owner to miguel.`, async () => {
+      const sale = await Sale.deployed()
+      await as(saleConf.owner, sale.changeOwner, miguel)
+      const owner = await sale.owner.call()
+      const expected = miguel
+      const errMsg = ownerAccessError + ` change the owner`
+      assert.strictEqual(owner, expected, errMsg)
+      await as(miguel, sale.changeOwner, saleConf.owner)
+    })
+
     it(`should not allow miguel to change the price.`, () =>
       new Promise((resolve, reject) =>
         Sale.deployed()
