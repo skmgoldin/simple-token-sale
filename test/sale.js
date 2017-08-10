@@ -19,8 +19,6 @@ contract(`Sale`, (accounts) => {
 
   let tokensForSale;
 
-  const wrongTokenBalance = `has an incorrect token balance.`
-  const badInitialization = `was not initialized properly`
   /*
    * Utility Functions
    */
@@ -94,6 +92,26 @@ contract(`Sale`, (accounts) => {
     });
   }
 
+  function detectSendObject(...args) {
+    if(typeof(args[args.length - 1]) === Object) {
+      return args[args.length - 1]
+    } else {
+      return {}
+    }
+  }
+
+  function asOwner(fn, ...args) {
+    let sendObject = detectSendObject(args)
+    sendObject.from = owner
+    return fn(...args, sendObject) 
+  }
+
+  function notAsOwner(fn, ...args) {
+    let sendObject = detectSendObject(args)
+    sendObject.from = james
+    return fn(...args, sendObject) 
+  }
+
   before(() => {
     const tokensPreAllocated = totalPreSoldTokens().add(totalFoundersTokens());
     saleConf.price = new BN(saleConf.price, 10);
@@ -103,6 +121,7 @@ contract(`Sale`, (accounts) => {
   });
 
   describe(`Initial token issuance`, () => {
+    const wrongTokenBalance = `has an incorrect token balance.`
     it(`should instantiate preBuyers with the proper number of tokens`, () => {
       Promise.all(
         Object.keys(preBuyersConf).map(async (curr, i, arr) => {
@@ -143,6 +162,7 @@ contract(`Sale`, (accounts) => {
     });
   });
   describe(`Instantiation`, () => {
+    const badInitialization = `was not initialized properly`
     it(`should instantiate with the price set to ${saleConf.price} Wei.`, async () => {
       const sale = await Sale.deployed()
       const price = await sale.price.call()
@@ -176,93 +196,74 @@ contract(`Sale`, (accounts) => {
   });
 
   describe(`Owner-only functions`, () => {
-    it(`should not allow James to change the price.`, () =>
-      new Promise((resolve, reject) =>
-        Sale.deployed()
-        .then((sale) => sale.changePrice(saleConf.price + 1, {from: james}))
-        .then(() => {
-          reject(`A non-owner was able to change the sale price`);
-        })
-        .catch((err) => Sale.deployed())
-        .then((sale) => sale.price.call())
-        .then((price) =>
-          resolve(
-            assert.equal(price.toString(10), saleConf.price.toString(10),
-            `A non-owner was able to change the sale price`)
-          )
-        )
-        .catch((err) => reject(err))
-      )
-    );
-    it(`should not allow James to change the startBlock.`, () =>
-      new Promise((resolve, reject) =>
-        Sale.deployed()
-        .then((sale) =>
-          sale.changeStartBlock(saleConf.startBlock.add(1), {from: james})
-        )
-        .then(() => {
-          reject(`A non-owner was able to change the sale startBlock`);
-        })
-        .catch((err) => Sale.deployed())
-        .then((sale) => sale.startBlock.call())
-        .then((startBlock) =>
-          resolve(
-            assert.equal(startBlock.toString(10),
-            saleConf.startBlock.toString(10),
-            `A non-owner was able to change the sale startBlock`)
-          )
-        )
-        .catch((err) => reject(err))
-      )
-    );
-    it(`should not allow James to change the owner.`, () =>
-      new Promise((resolve, reject) =>
-        Sale.deployed()
-        .then((sale) => sale.changeOwner(james, {from: james}))
-        .then(() => reject(`A non-owner was able to change the sale owner`))
-        .catch((err) => Sale.deployed())
-        .then((sale) => sale.owner.call())
-        .then((owner) =>
-          resolve(
-            assert.equal(owner.valueOf(), saleConf.owner,
-            `A non-owner was able to change the sale owner`)
-          )
-        )
-        .catch((err) => reject(err))
-      )
-    );
-    it(`should not allow James to change the wallet.`, () =>
-      new Promise((resolve, reject) =>
-        Sale.deployed()
-        .then((sale) => sale.changeWallet(james, {from: james}))
-        .then(() => reject(`A non-owner was able to change the wallet`))
-        .catch((err) => Sale.deployed())
-        .then((sale) => sale.wallet.call())
-        .then((wallet) =>
-          resolve(
-            assert.equal(wallet.valueOf(), saleConf.wallet.toLowerCase(),
-            `A non-owner was able to change the sale wallet`)
-          )
-        )
-        .catch((err) => reject(err))
-      )
-    );
-    it(`should not allow James to activate the emergencyToggle.`, () =>
-      new Promise((resolve, reject) =>
-        Sale.deployed()
-        .then((sale) => sale.emergencyToggle({from: james}))
-        .then(() => reject(`A non-owner was able to activate the emergencyToggle`))
-        .catch((err) => Sale.deployed())
-        .then((sale) => sale.emergencyFlag.call())
-        .then((res) =>
-          resolve(
-            assert.equal(res.valueOf(), false,
-            `A non-owner was able to activate the emergencyToggle`)
-          )
-        )
-        .catch((err) => reject(err))
-      )
-    );
+    const nonOwnerAccessError = `A non-owner was able to`
+    const ownerAccessError = `The owner was unable to`
+    const unexpectedError = `An unexpected error occurred`
+    it(`should not allow a non-owner to change the price.`, async () => {
+      const sale = await Sale.deployed()
+      try {
+        await notAsOwner(sale.changePrice, saleConf.price + 1)
+      } catch(err) {
+        const errMsg = unexpectedError
+        assert(isEVMException(err), errMsg)
+      }
+      const price = await sale.price.call()
+      const expected = saleConf.price
+      const errMsg = nonOwnerAccessError + ` change the price`
+      assert.strictEqual(price.toString(10), expected.toString(10), errMsg)
+    })
+    it(`should not allow a non-owner to change the startBlock.`, async () => {
+      const sale = await Sale.deployed()
+      try {
+        await notAsOwner(sale.startBlock, saleConf.startBlock + 1)
+      } catch(err) {
+        const errMsg = unexpectedError
+        assert(isEVMException(err), errMsg)
+      }
+      const startBlock = await sale.startBlock.call()
+      const expected = saleConf.startBlock
+      const errMsg = nonOwnerAccessError + ` change the start block`
+      assert.strictEqual(startBlock.toString(10), expected.toString(10), errMsg)
+    })
+    it(`should not allow a non-owner to change the owner.`, async () => {
+      const sale = await Sale.deployed()
+      try {
+        await notAsOwner(sale.owner, james)
+      } catch(err) {
+        const errMsg = unexpectedError
+        assert(isEVMException(err), errMsg)
+      }
+      const owner = await sale.owner.call()
+      const expected = saleConf.owner
+      const errMsg = nonOwnerAccessError + ` change the owner`
+      assert.strictEqual(owner.toString(), expected.toString(), errMsg)
+    });
+    it(`should not allow a non-owner to change the wallet.`, async () => {
+      const sale = await Sale.deployed()
+      try {
+        await notAsOwner(sale.wallet, james)
+      } catch(err) {
+        const errMsg = unexpectedError
+        assert(isEVMException(err), errMsg)
+      }
+      const wallet = await sale.wallet.call()
+      const expected = saleConf.wallet
+      const errMsg = nonOwnerAccessError + ` change the wallet`
+      assert.strictEqual(wallet.toString(), expected.toLowerCase(), errMsg)
+    })
+    it(`should not allow a non-owner to activate the emergencyToggle.`, async () => {
+      const sale = await Sale.deployed()
+      try {
+        await notAsOwner(sale.emergencyToggle)
+      } catch(err) {
+        const errMsg = unexpectedError
+        assert(isEVMException(err), errMsg)
+      }
+      const emergencyFlag = await sale.emergencyFlag.call()
+      const expected = false
+      const errMsg = nonOwnerAccessError + ` change the emergencyToggle`
+      assert.strictEqual(emergencyFlag, expected, errMsg)
+    })
     it(`should change the owner to miguel.`, () =>
       new Promise((resolve, reject) =>
         Sale.deployed()
