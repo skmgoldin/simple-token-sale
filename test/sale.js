@@ -19,6 +19,8 @@ contract(`Sale`, (accounts) => {
 
   let tokensForSale;
 
+  const wrongTokenBalance = `has an incorrect token balance.`
+  const badInitialization = `was not initialized properly`
   /*
    * Utility Functions
    */
@@ -92,10 +94,6 @@ contract(`Sale`, (accounts) => {
     });
   }
 
-  function numberOfFilters() {
-    return Object.keys(foundersConf).length
-  }
-
   before(() => {
     const tokensPreAllocated = totalPreSoldTokens().add(totalFoundersTokens());
     saleConf.price = new BN(saleConf.price, 10);
@@ -106,22 +104,19 @@ contract(`Sale`, (accounts) => {
 
   describe(`Initial token issuance`, () => {
     it(`should instantiate preBuyers with the proper number of tokens`, () => {
-      const wrongBalance =
-        `A preBuyer was instantiated with an incorrect token balance`
       Promise.all(
         Object.keys(preBuyersConf).map(async (curr, i, arr) => {
           const tokenBalance =
             await getTokenBalanceOf(preBuyersConf[curr].address)
           const expected = preBuyersConf[curr].amount
+          const errMsg = `A pre-buyer ` + wrongTokenBalance
           assert.strictEqual(
-            tokenBalance.toString(10), expected.toString(10), wrongBalance
+            tokenBalance.toString(10), expected.toString(10), errMsg
           )
         })
       )
     });
     it(`should instantiate disburser contracts with the proper number of tokens`, () => {
-      const wrongBalance =
-        `A disburser contract was instantiated with an incorrect token balance.`
       const totalDisbursers =
         new BN(Object.keys(foundersConf.vestingDates).length, 10)
       Promise.all(
@@ -130,79 +125,54 @@ contract(`Sale`, (accounts) => {
           const disburserAddr = await filter.disburser.call()
           const tokenBalance = await getTokenBalanceOf(disburserAddr)
           const expected = totalFoundersTokens().div(totalDisbursers)
-          assert.equal(
-            tokenBalance.toString(10), expected.toString(10), wrongBalance
+          const errMsg = `A disburser contract ` + wrongTokenBalance
+          assert.strictEqual(
+            tokenBalance.toString(10), expected.toString(10), errMsg
           )
         })
       )
     });
     it(`should instantiate the public sale with the total supply of tokens ` +
        `minus the sum of tokens pre-sold.`, async () => {
-      const wrongBalance =
-        `The sale contract was instantiated with an incorrect token balance.`
       const tokenBalance = await getTokenBalanceOf(Sale.address)
       const expected = tokensForSale.toString(10)
-      assert.equal(
-        tokenBalance.toString(10),
-        expected.toString(10),
-        wrongBalance
+      const errMsg = `The sale contract ` + wrongTokenBalance
+      assert.strictEqual(
+        tokenBalance.toString(10), expected.toString(10), errMsg
       )
     });
   });
   describe(`Instantiation`, () => {
-    it(`should instantiate with the price set to ${saleConf.price} Wei.`, () =>
-      new Promise((resolve, reject) =>
-        Sale.deployed()
-        .then((instance) => instance.price.call())
-        .then((price) =>
-          resolve(
-            assert.equal(price.toString(10), saleConf.price.toString(10),
-            `The price was not instantiated properly.`)
-          )
-        )
-        .catch((err) => reject(err))
-      )
-    );
-    it(`should instantiate with the owner set to ${saleConf.owner}.`, () =>
-      new Promise((resolve, reject) =>
-        Sale.deployed()
-        .then((sale) => sale.owner.call())
-        .then((owner) =>
-          resolve(
-            assert.equal(owner.valueOf(), saleConf.owner,
-            `The owner was not instantiated properly.`)
-          )
-        )
-        .catch((err) => reject(err))
-      )
-    );
-    it(`should instantiate with the wallet set to ${saleConf.wallet}.`, () =>
-      new Promise((resolve, reject) =>
-        Sale.deployed()
-        .then((sale) => sale.wallet.call())
-        .then((wallet) =>
-          resolve(
-            assert.equal(wallet.valueOf(), saleConf.wallet.toLowerCase(),
-            `The wallet was not instantiated properly.`)
-          )
-        )
-        .catch((err) => reject(err))
-      )
-    );
-    it(`should instantiate with the startBlock set to ${saleConf.startBlock}.`, () =>
-      new Promise((resolve, reject) =>
-        Sale.deployed()
-        .then((sale) => sale.startBlock.call())
-        .then((startBlock) =>
-          resolve(
-            assert.equal(startBlock.toString(10),
-            saleConf.startBlock.toString(10),
-            `The startBlock was not instantiated properly.`)
-          )
-        )
-        .catch((err) => reject(err))
-      )
-    );
+    it(`should instantiate with the price set to ${saleConf.price} Wei.`, async () => {
+      const sale = await Sale.deployed()
+      const price = await sale.price.call()
+      const expected = saleConf.price
+      const errMsg = `The price ` + badInitialization
+      assert.strictEqual(price.toString(10), expected.toString(10), errMsg)
+    });
+    it(`should instantiate with the owner set to ${saleConf.owner}.`, async () => {
+      const sale = await Sale.deployed()
+      const owner = await sale.owner.call()
+      const expected = saleConf.owner
+      const errMsg = `The owner ` + badInitialization
+      assert.strictEqual(owner.valueOf(), saleConf.owner, errMsg)
+    });
+    it(`should instantiate with the wallet set to ${saleConf.wallet}.`, async () => {
+      const sale = await Sale.deployed()
+      const wallet = await sale.wallet.call()
+      const expected = saleConf.wallet
+      const errMsg = `The wallet ` + badInitialization
+      assert.strictEqual(wallet.valueOf(), expected.toLowerCase(), errMsg)
+    });
+    it(`should instantiate with the startBlock set to ${saleConf.startBlock}.`, async () => {
+      const sale = await Sale.deployed()
+      const startBlock = await sale.startBlock.call()
+      const expected = saleConf.startBlock
+      const errMsg = `The start block ` + badInitialization
+      assert.strictEqual(
+        startBlock.toString(10), saleConf.startBlock.toString(10), errMsg
+      ) 
+    })
   });
 
   describe(`Owner-only functions`, () => {
