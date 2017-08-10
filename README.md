@@ -10,9 +10,7 @@ truffle compile
 ```
 
 # Running the tests
-To run the tests, run a TestRPC locally with `testrpc -a 100` and then run `truffle test`.
-
-Note that you will need to restart the testrpc every time you run the tests, as the tests have a stateful dependency on the block number. In the "Sale period 0" block of tests, the testrpc is force-mined up to the `startBlock` in `conf/sale.json`. If the tests are re-run with the block number already greater than the `startBlock`, tests in the pre-sale period where transactions should fail will end up succeeding, and the tests will not pass as a result.
+`npm run test`
 
 # Composition of the repo
 The repo is composed as a Truffle project. The test suite can be found in `test/sale.json`. The sale contract is in `contracts/Sale.sol`. The deployment scripts are in the `migrations` folder.
