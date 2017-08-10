@@ -92,6 +92,10 @@ contract(`Sale`, (accounts) => {
     });
   }
 
+  function numberOfFilters() {
+    return Object.keys(foundersConf).length
+  }
+
   before(() => {
     const tokensPreAllocated = totalPreSoldTokens().add(totalFoundersTokens());
     saleConf.price = new BN(saleConf.price, 10);
@@ -101,61 +105,49 @@ contract(`Sale`, (accounts) => {
   });
 
   describe(`Initial token issuance`, () => {
-    it(`should instantiate preBuyers with the proper number of tokens.`, () =>
+    it(`should instantiate preBuyers with the proper number of tokens`, () => {
+      const wrongBalance =
+        `A preBuyer was instantiated with an incorrect token balance`
       Promise.all(
-        Object.keys(preBuyersConf).map((curr, i, arr) =>
-          new Promise((resolve, reject) =>
-            getTokenBalanceOf(preBuyersConf[curr].address)
-            .then((balance) =>
-              resolve(
-                assert.equal(balance.toString(10),
-                preBuyersConf[curr].amount.toString(10),
-                `A preBuyer ${preBuyersConf[curr].address} was instantiated with ` +
-                `an incorrect balance.`)
-              )
-            )
-            .catch((err) => reject(err))
+        Object.keys(preBuyersConf).map(async (curr, i, arr) => {
+          const tokenBalance =
+            await getTokenBalanceOf(preBuyersConf[curr].address)
+          const expected = preBuyersConf[curr].amount
+          assert.strictEqual(
+            tokenBalance.toString(10), expected.toString(10), wrongBalance
           )
-        )
-      )
-    );
-    it(`should instantiate disburser contracts with the proper number of tokens.`, () =>
-      new Promise((resolve, reject) =>
-        getFilter(0)
-        .then((filter) => filter.disburser.call())
-        .then((disburserAddr) => getTokenBalanceOf(disburserAddr))
-        .then((bal) => {
-          const expectedBalance = totalFoundersTokens().div(new BN(`2`, 10));
-          assert.equal(bal.toString(10), expectedBalance.toString(10),
-          `A disburser contract has an incorrect token balance.`);
         })
-        .then(() => getFilter(1))
-        .then((filter) => filter.disburser.call())
-        .then((disburserAddr) => getTokenBalanceOf(disburserAddr))
-        .then((bal) => {
-          const expectedBalance = totalFoundersTokens().div(new BN(`2`, 10));
-          resolve(
-            assert.equal(bal.toString(10), expectedBalance.toString(10),
-            `A disburser contract has an incorrect token balance.`)
-          );
-        })
-        .catch((err) => reject(err))
       )
-    );
+    });
+    it(`should instantiate disburser contracts with the proper number of tokens`, () => {
+      const wrongBalance =
+        `A disburser contract was instantiated with an incorrect token balance.`
+      const totalDisbursers =
+        new BN(Object.keys(foundersConf.vestingDates).length, 10)
+      Promise.all(
+        Object.keys(foundersConf.vestingDates).map(async (curr, i, arr) => {
+          const filter = await getFilter(i)
+          const disburserAddr = await filter.disburser.call()
+          const tokenBalance = await getTokenBalanceOf(disburserAddr)
+          const expected = totalFoundersTokens().div(totalDisbursers)
+          assert.equal(
+            tokenBalance.toString(10), expected.toString(10), wrongBalance
+          )
+        })
+      )
+    });
     it(`should instantiate the public sale with the total supply of tokens ` +
-       `minus the sum of tokens pre-sold.`, () =>
-      new Promise((resolve, reject) =>
-        getTokenBalanceOf(Sale.address)
-        .then((balance) =>
-          resolve(
-            assert.equal(balance.toString(10),
-            tokensForSale.toString(10),
-            `The sale contract was not given the correct number of tokens to sell`)
-          )
-        )
-        .catch((err) => reject(err))
+       `minus the sum of tokens pre-sold.`, async () => {
+      const wrongBalance =
+        `The sale contract was instantiated with an incorrect token balance.`
+      const tokenBalance = await getTokenBalanceOf(Sale.address)
+      const expected = tokensForSale.toString(10)
+      assert.equal(
+        tokenBalance.toString(10),
+        expected.toString(10),
+        wrongBalance
       )
-    );
+    });
   });
   describe(`Instantiation`, () => {
     it(`should instantiate with the price set to ${saleConf.price} Wei.`, () =>
