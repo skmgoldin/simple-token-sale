@@ -95,13 +95,22 @@ contract(`Sale`, (accounts) => {
     });
   }
 
+  // This function actually could cause bad behavior, as its possible any
+  // object could have from, to, gas, gasPrice or value properties
   function as(actor, fn, ...args) {
     let sendObject = detectSendObject(args[args.length - 1])
     sendObject.from = actor
     return fn(...args, sendObject)
 
     function detectSendObject(potentialSendObject) {
-      if(typeof(potentialSendObject) === `object`) {
+      if(potentialSendObject === undefined) { return {} }
+      if(
+         potentialSendObject.hasOwnProperty(`from`) ||
+         potentialSendObject.hasOwnProperty(`to`) ||
+         potentialSendObject.hasOwnProperty(`gas`) ||
+         potentialSendObject.hasOwnProperty(`gasPrice`) ||
+         potentialSendObject.hasOwnProperty(`value`)
+      ) {
         return potentialSendObject
       } else {
         return {}
@@ -496,91 +505,89 @@ contract(`Sale`, (accounts) => {
   });
 
   describe(`Post-sale period`, () => {
-    it(`should not transfer 1 token to James.`, () => {
-      let startingBalance;
+    const balanceError = `A balance was not as expected following a purchase`
+    const transferError = `A balance was not as expected following a tranfer`
+    const sellOutError = ` was able to purchase when the sale was sold out`
+    it(`should not transfer 1 token to James.`, async () => {
+      const startingBalance = await getTokenBalanceOf(james)
       const purchaseAmount = new BN(`1`, 10);
-
-      return getTokenBalanceOf(james)
-      .then((bal) => { startingBalance = bal; })
-      .then(() => purchaseToken(james, purchaseAmount))
-      .then(() => {
-        throw new Error(`James was able ` +
-        `to purchase tokens after the sale ended.`);
-      })
-      .catch((err) => getTokenBalanceOf(james))
-      .then((balance) => {
-        const expectedValue = startingBalance;
-        assert.equal(balance.toString(10), expectedValue.toString(10),
-          `James was able to purchase tokens after the sale ended.`);
-      });
+      try {
+        await purchaseToken(james, purchaseAmount)
+        const errMsg = james + sellOutError
+        assert(false, errMsg)
+      } catch(err) {
+        const errMsg = unexpectedError  
+        assert(isEVMException(err), errMsg)
+      }
+      const finalBalance = await getTokenBalanceOf(james)
+      const expected = startingBalance
+      const errMsg = balanceError
+      assert.strictEqual(finalBalance.toString(10), expected.toString(10), errMsg)
+    })
+    it(`should not transfer 10 tokens to Miguel.`, async () => {
+      const startingBalance = await getTokenBalanceOf(miguel)
+      const purchaseAmount = new BN(`10`, 10);
+      try {
+        await purchaseToken(miguel, purchaseAmount)
+        const errMsg = miguel + sellOurError
+        assert(false, errMsg)
+      } catch(err) {
+        const errMsg = unexpectedError  
+        assert(isEVMException(err), errMsg)
+      }
+      const finalBalance = await getTokenBalanceOf(miguel)
+      const expected = startingBalance
+      const errMsg = balanceError
+      assert.strictEqual(finalBalance.toString(10), expected.toString(10), errMsg)
+    })
+    it(`should not transfer 100 tokens to Edwhale.`, async () => {
+      const startingBalance = await getTokenBalanceOf(edwhale)
+      const purchaseAmount = new BN(`100`, 10);
+      try {
+        await purchaseToken(edwhale, purchaseAmount)
+        const errMsg = edwhale + sellOutError
+        assert(false, errMsg)
+      } catch(err) {
+        const errMsg = unexpectedError  
+        assert(isEVMException(err), errMsg)
+      }
+      const finalBalance = await getTokenBalanceOf(edwhale)
+      const expected = startingBalance
+      const errMsg = balanceError
+      assert.strictEqual(finalBalance.toString(10), expected.toString(10), errMsg)
+    })
+    it(`should report the proper sum of Wei in the wallet.`, async () => {
+      const balance = await ethQuery.getBalance(saleConf.wallet)
+      const expected = tokensForSale.mul(saleConf.price);
+      const errMsg = `The amount of Ether in the wallet is not what it should be at sale end`
+      assert.strictEqual(balance.toString(10), expected.toString(10), errMsg)
     });
-    it(`should not transfer 10 tokens to Miguel.`, () =>
-      purchaseToken(miguel, new BN(`10`, 10))
-      .then(() => {
-        throw new Error(`Miguel was able ` +
-        `to purchase tokens after the sale ended.`);
-      })
-      .catch((err) => getTokenBalanceOf(miguel))
-      .then((balance) => assert.equal(balance.toString(10), `10`, `Miguel was able ` +
-        `to purchase tokens after the sale ended.`))
-    );
-    it(`should not transfer 100 tokens to Edwhale.`, () => {
-      let startingBalance;
-
-      return getTokenBalanceOf(edwhale)
-      .then((bal) => { startingBalance = bal; })
-      .then(() => purchaseToken(edwhale, new BN(`100`, 10)))
-      .then(() => {
-        throw new Error(`Edwhale was able ` +
-        `to purchase tokens after the sale ended.`);
-      })
-      .catch((err) => getTokenBalanceOf(edwhale))
-      .then((bal) => assert.equal(bal.toString(10), startingBalance.toString(10),
-        `Edwhale was able to purchase tokens after the sale ended.`));
+    it(`should report a zero balance for the sale contract.`, async () => {
+      const balance = await getTokenBalanceOf(Sale.address)
+      const expected = new BN(`0`, 10)
+      const errMsg = `The sale contract still has tokens in it when it should be sold out`
+      assert.strictEqual(balance.toString(10), expected.toString(10), errMsg)
     });
-    it(`should report the proper sum of Wei in the wallet.`, () =>
-      ethQuery.getBalance(saleConf.wallet)
-      .then((bal) => {
-        const expectedBalance = tokensForSale.mul(saleConf.price);
-        assert.equal(bal.toString(10), expectedBalance.toString(10),
-        `The amount of Ether in the wallet is not what it should be at sale end`);
-      })
-    );
-    it(`should report a zero balance for the sale contract.`, () =>
-      getTokenBalanceOf(Sale.address)
-      .then((balance) => assert.equal(balance.toString(10), `0`, `The sale ` +
-        `ended with tokens still in the sale contract`))
-    );
-    it(`should allow Edwhale to transfer 10 tokens to James.`, () =>
-      new Promise((resolve, reject) => {
-        let edwhaleStartingBalance;
-        let jamesStartingBalance;
-        const transferAmount = new BN(`10`, 10);
-
-        return getTokenBalanceOf(edwhale)
-        .then((balance) => { edwhaleStartingBalance = balance; })
-        .then(() => getTokenBalanceOf(james))
-        .then((balance) => { jamesStartingBalance = balance; })
-        .then(() => Sale.deployed())
-        .then((instance) => instance.token.call())
-        .then((tokenAddr) => HumanStandardToken.at(tokenAddr))
-        .then((instance) => instance.transfer(james, transferAmount, {from: edwhale}))
-        .then(() => getTokenBalanceOf(edwhale))
-        .then((balance) => {
-          const expectedEdwhaleBalance = edwhaleStartingBalance.sub(transferAmount);
-          assert.equal(balance.toString(10), expectedEdwhaleBalance.toString(10),
-          `Edwhale's balance is not as-expected`);
-        })
-        .then(() => getTokenBalanceOf(james))
-        .then((balance) => {
-          const expectedJamesBalance = jamesStartingBalance.add(transferAmount);
-          assert.equal(balance.toString(10), expectedJamesBalance.toString(10),
-          `James' balance is not as-expected`);
-        })
-        .then(() => resolve())
-        .catch((err) => reject(err));
-      })
-    );
+    it(`should allow Edwhale to transfer 10 tokens to James.`, async () => {
+      const transferAmount = new BN(`10`, 10);
+      const edwhaleStartingBalance = await getTokenBalanceOf(edwhale)
+      const jamesStartingBalance = await getTokenBalanceOf(james)
+      const sale = await Sale.deployed()
+      const tokenAddr = await sale.token.call()
+      const token = HumanStandardToken.at(tokenAddr)
+      await as(edwhale, token.transfer, james, transferAmount)
+      const edwhaleFinalBalance = await getTokenBalanceOf(edwhale)
+      const edwhaleExpected = edwhaleStartingBalance.sub(transferAmount);
+      const errMsg = balanceError
+      assert.strictEqual(
+        edwhaleFinalBalance.toString(10), edwhaleExpected.toString(10), errMsg
+      )
+      const jamesFinalBalance = await getTokenBalanceOf(james)
+      const jamesExpected = jamesStartingBalance.add(transferAmount);
+      assert.strictEqual(
+        jamesFinalBalance.toString(10), jamesExpected.toString(10), errMsg
+      )
+    });
   });
 
   describe(`Filters and disbursers`, () => {
