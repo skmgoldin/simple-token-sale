@@ -96,13 +96,13 @@ contract(`Sale`, (accounts) => {
   }
 
   function as(actor, fn, ...args) {
-    let sendObject = detectSendObject(args)
+    let sendObject = detectSendObject(args[args.length - 1])
     sendObject.from = actor
     return fn(...args, sendObject)
 
-    function detectSendObject(...args) {
-      if(typeof(args[args.length - 1]) === Object) {
-        return args[args.length - 1]
+    function detectSendObject(potentialSendObject) {
+      if(typeof(potentialSendObject) === `object`) {
+        return potentialSendObject
       } else {
         return {}
       }
@@ -440,93 +440,59 @@ contract(`Sale`, (accounts) => {
   });
 
   describe(`Sale period 1`, () => {
+    const balanceError = `A balance was not as expected following a purchase`
+
     it(`should reject a transfer of tokens to Edwhale greater than the sum ` +
-       `of tokens available for purchase.`, () =>
-      new Promise((resolve, reject) => {
-        let startingBalance;
-
-        getTokenBalanceOf(edwhale)
-        .then((balance) => { startingBalance = balance; })
-        .then(() => getTokenBalanceOf(Sale.address))
-        .then((balance) => {
-          const tooMuch = balance.add(new BN(`1`, 10));
-          return purchaseToken(edwhale, tooMuch);
-        })
-        .then(() => {
-          reject(`Edwhale was able to purchase more tokens than should be available.`);
-        })
-        .catch((err) => getTokenBalanceOf(edwhale))
-        .then((balance) => {
-          const expectedValue = startingBalance;
-          resolve(
-            assert.equal(balance.toString(10), expectedValue.toString(10),
-            `Edwhale was able to purchase more tokens than should be available.`)
-          );
-        })
-        .catch((err) => reject(err));
-      })
-    );
-    it(`should return excess Wei to Edwhale`, () =>
-      new Promise((resolve, reject) => {
-        let startingBalance;
-        let gasPrice;
-        let gasUsed;
-        let expectedEthDebit;
-        let expectedFinalBalance;
-        const excessEther = saleConf.price.div(new BN(`2`, 10));
-
-        ethQuery.getBalance(edwhale)
-        .then((balance) => { startingBalance = balance; })
-        .then(() => ethQuery.gasPrice())
-        .then((_gasPrice) => { gasPrice = _gasPrice; })
-        .then(() => Sale.deployed())
-        .then((sale) =>
-          sale.purchaseTokens(
-            {from: edwhale,
-              value: saleConf.price.add(excessEther),
-              gasPrice}
-          )
+       `of tokens available for purchase.`, async () => {
+      const startingBalance = await getTokenBalanceOf(edwhale)
+      const saleBalance = await getTokenBalanceOf(Sale.address)
+      const tooMuch = saleBalance.add(new BN(`1`, 10))
+      try {
+        await purchaseToken(edwhale, tooMuch)
+        const errMsg = edwhale + ` was able to purchase more tokens than should ` +
+          `be available`
+        assert(false, errMsg)
+      } catch(err) {
+        const errMsg = unexpectedError
+        assert(isEVMException(err), errMsg)
+      }
+      const finalBalance = await getTokenBalanceOf(edwhale)
+      const expected = startingBalance
+      const errMsg = balanceError
+      assert.strictEqual(
+        finalBalance.toString(10), expected.toString(10), errMsg
+      )
+    })
+    it(`should return excess Wei to Edwhale`, async () => {
+      const startingBalance = await ethQuery.getBalance(edwhale)
+      const gasPrice = await ethQuery.gasPrice()
+      const sale = await Sale.deployed()
+      const excessEther = saleConf.price.div(new BN(`2`, 10));
+      const receipt = 
+        await as(
+          edwhale,
+          sale.purchaseTokens,
+          {value: saleConf.price.add(excessEther), gasPrice: gasPrice}
         )
-        .then((receipt) => {
-          gasUsed = new BN(receipt.receipt.gasUsed, 10);
-          expectedEthDebit = gasPrice.mul(gasUsed).add(saleConf.price);
-          expectedFinalBalance = startingBalance.sub(expectedEthDebit);
-        })
-        .then(() => ethQuery.getBalance(edwhale))
-        .then((balance) => {
-          const expectedValue = expectedFinalBalance;
-          resolve(
-            assert.equal(balance.toString(10), expectedValue.toString(10),
-            `Edwhale's balance is wrong.`)
-          );
-        })
-        .catch((err) => reject(err));
-      })
-    );
-    it(`should transfer all the remaining tokens to Edwhale.`, () =>
-      new Promise((resolve, reject) => {
-        let saleBalance;
-        let startingBalance;
-
-        getTokenBalanceOf(edwhale)
-        .then((balance) => { startingBalance = balance; })
-        .then(() => getTokenBalanceOf(Sale.address))
-        .then((balance) => {
-          saleBalance = balance;
-          return purchaseToken(edwhale, saleBalance);
-        })
-        .then(() => getTokenBalanceOf(edwhale))
-        .then((balance) => {
-          const expectedValue = startingBalance.add(saleBalance);
-          resolve(
-            assert.equal(balance.toString(10),
-            expectedValue.toString(10),
-            `Edwhale was able to purchase more tokens than should be available.`)
-          );
-        })
-        .catch((err) => reject(err));
-      })
-    );
+      const gasUsed = new BN(receipt.receipt.gasUsed, 10)
+      const expectedEthDebit = gasPrice.mul(gasUsed).add(saleConf.price);
+      const finalBalance = await ethQuery.getBalance(edwhale)
+      const expected = startingBalance.sub(expectedEthDebit);
+      const errMsg = `Edwhale's ether balance is not as expected following ` +
+        `a purchase transaction`
+      assert.strictEqual(
+        finalBalance.toString(10), expected.toString(10), errMsg
+      )
+    })
+    it(`should transfer all the remaining tokens to Edwhale.`, async () => {
+      const startingBalance = await getTokenBalanceOf(edwhale)
+      const saleBalance = await getTokenBalanceOf(Sale.address)
+      await purchaseToken(edwhale, saleBalance)
+      const finalBalance = await getTokenBalanceOf(edwhale)
+      const expected = startingBalance.add(saleBalance)
+      const errMsg = balanceError
+      assert.strictEqual(finalBalance.toString(10), expected.toString(10), errMsg)
+    })
   });
 
   describe(`Post-sale period`, () => {
