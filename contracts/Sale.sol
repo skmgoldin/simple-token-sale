@@ -1,5 +1,5 @@
 pragma solidity ^0.4.11;
-import "./HumanStandardToken.sol";
+import "tokens/HumanStandardToken.sol";
 import "./Disbursement.sol";
 import "./Filter.sol";
 
@@ -88,7 +88,7 @@ contract Sale {
         startBlock = _startBlock;
         freezeBlock = _freezeBlock;
 
-        assert(token.transfer(this, token.totalSupply()));
+        token.transfer(this, token.totalSupply());
         assert(token.balanceOf(this) == token.totalSupply());
         assert(token.balanceOf(this) == 10**18);
     }
@@ -106,7 +106,7 @@ contract Sale {
         assert(!preSaleTokensDisbursed);
 
         for(uint i = 0; i < _preBuyers.length; i++) {
-            require(token.transfer(_preBuyers[i], _preBuyersTokens[i]));
+            token.transfer(_preBuyers[i], _preBuyersTokens[i]);
             TransferredPreBuyersReward(_preBuyers[i], _preBuyersTokens[i]);
         }
 
@@ -155,7 +155,7 @@ contract Sale {
                it access controls */
             filter.setup(vault);             
             // Transfer to the vault the tokens it is to disburse
-            assert(token.transfer(vault, tokensPerTranch));
+            token.transfer(vault, tokensPerTranch);
             TransferredFoundersTokens(vault, tokensPerTranch);
         }
 
@@ -191,7 +191,7 @@ contract Sale {
         wallet.transfer(purchaseAmount);
 
         // Transfer the sum of tokens tokenPurchase to the msg.sender
-        assert(token.transfer(msg.sender, tokenPurchase));
+        token.transfer(msg.sender, tokenPurchase);
 
         PurchasedTokens(msg.sender, tokenPurchase);
     }
