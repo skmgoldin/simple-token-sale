@@ -3,8 +3,9 @@
   "version": "0.0.1",
   "description": "Contracts for fixed-price, finite-supply token sales.",
   "scripts": {
-    "test": "if [ -e rpc_pid.txt ] ; then kill `cat rpc_pid.txt` ; fi \n nohup testrpc -a 100 > /dev/null 2>&1 & \n echo $! > rpc_pid.txt \n truffle test \n if [ $? != 0 ] ; then exit 1 ; fi \n kill `cat rpc_pid.txt` \n rm rpc_pid.txt",
-    "lint": "eslint --fix"
+    "test": "./test.sh",
+    "fix": "eslint --fix",
+    "lint": "eslint"
   },
   "author": "Mike Goldin <mike.goldin@consensys.net>",
   "license": "ISC",
@@ -19,6 +20,8 @@
     "truffle-hdwallet-provider": "0.0.3"
   },
   "devDependencies": {
-    "eslint-config-vidroll": "1.0.0"
+    "eslint": "4.4.1",
+    "eslint-config-airbnb-base": "11.3.1",
+    "eslint-plugin-import": "2.7.0"
   }
 }
