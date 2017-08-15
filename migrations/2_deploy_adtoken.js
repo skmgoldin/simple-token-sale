@@ -32,28 +32,17 @@ module.exports = (deployer, network, accounts) => {
     foundersConf = JSON.parse(fs.readFileSync('./conf/founders.json'));
   }
 
-  const preBuyers = [];
-  const preBuyersTokens = [];
-  Object.keys(preBuyersConf).map((curr) => {
-    preBuyers.push(preBuyersConf[curr].address);
-    preBuyersTokens.push(new BN(preBuyersConf[curr].amount, 10));
-    return undefined;
-  });
+  const preBuyers = Object.keys(preBuyersConf).map(preBuyer => preBuyersConf[preBuyer].address);
+  const preBuyersTokens = Object.keys(preBuyersConf).map(preBuyer =>
+    new BN(preBuyersConf[preBuyer].amount, 10));
 
-  const founders = [];
-  const foundersTokens = [];
+  const founders = Object.keys(foundersConf.founders).map(recipient =>
+    foundersConf.founders[recipient].address);
+  const foundersTokens = Object.keys(foundersConf.founders).map(recipient =>
+    new BN(foundersConf.founders[recipient].amount, 10));
 
-  Object.keys(foundersConf.founders).map((recipient) => {
-    founders.push(foundersConf.founders[recipient].address);
-    foundersTokens.push(new BN(foundersConf.founders[recipient].amount, 10));
-    return undefined;
-  });
-
-  const vestingDates = [];
-  Object.keys(foundersConf.vestingDates).map((date) => {
-    vestingDates.push(foundersConf.vestingDates[date]);
-    return undefined;
-  });
+  const vestingDates = Object.keys(foundersConf.vestingDates).map(date =>
+    foundersConf.vestingDates[date]);
 
   return deployer.deploy(Sale,
     saleConf.owner,
