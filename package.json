@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description": "Contracts for fixed-price, finite-supply token sales.",
   "scripts": {
-    "test": "./test.sh",
+    "test": "node test.js",
     "fix": "eslint --fix",
     "lint": "eslint"
   },
@@ -11,13 +11,14 @@
   "license": "ISC",
   "dependencies": {
     "aws-sdk": "2.9.0",
-    "bip39": "2.3.1",
     "bn.js": "4.11.6",
     "ethereumjs-wallet": "0.6.0",
     "ethjs-provider-http": "0.1.6",
     "ethjs-query": "0.2.4",
     "ethjs-rpc": "0.1.5",
-    "truffle-hdwallet-provider": "0.0.3"
+    "truffle-hdwallet-provider": "0.0.3",
+    "bip39": "2.4.0",
+    "ethereumjs-testrpc": "4.0.1"
   },
   "devDependencies": {
     "eslint": "4.4.1",

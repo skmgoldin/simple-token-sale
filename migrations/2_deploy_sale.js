@@ -26,33 +26,11 @@ const distributePreBuyersTokens = async function distributePreBuyersTokens(addre
   ));
 };
 
-module.exports = (deployer, network, accounts) => {
-  let saleConf;
-  let tokenConf;
-  let preBuyersConf;
-  let foundersConf;
-
-  if (network === 'development') {
-    saleConf = JSON.parse(fs.readFileSync('./conf/testSale.json'));
-    tokenConf = JSON.parse(fs.readFileSync('./conf/testToken.json'));
-    preBuyersConf = JSON.parse(fs.readFileSync('./conf/testPreBuyers.json'));
-    foundersConf = JSON.parse(fs.readFileSync('./conf/testFounders.json'));
-
-    saleConf.owner = accounts[0];
-    fs.writeFileSync('./conf/testSale.json', JSON.stringify(saleConf, null, '  '));
-
-    const pad = 10; // We use addresses from 0-3 for actors in the tests.
-    Object.keys(foundersConf.founders).map((curr, i) => {
-      foundersConf.founders[curr].address = accounts[i + pad];
-      return undefined;
-    });
-    fs.writeFileSync('./conf/testFounders.json', JSON.stringify(foundersConf, null, '  '));
-  } else {
-    saleConf = JSON.parse(fs.readFileSync('./conf/sale.json'));
-    tokenConf = JSON.parse(fs.readFileSync('./conf/token.json'));
-    preBuyersConf = JSON.parse(fs.readFileSync('./conf/preBuyers.json'));
-    foundersConf = JSON.parse(fs.readFileSync('./conf/founders.json'));
-  }
+module.exports = (deployer) => {
+  const saleConf = JSON.parse(fs.readFileSync('./conf/sale.json'));
+  const tokenConf = JSON.parse(fs.readFileSync('./conf/token.json'));
+  const preBuyersConf = JSON.parse(fs.readFileSync('./conf/preBuyers.json'));
+  const foundersConf = JSON.parse(fs.readFileSync('./conf/founders.json'));
 
   const preBuyers = Object.keys(preBuyersConf).map(preBuyer => preBuyersConf[preBuyer].address);
   const preBuyersTokens = Object.keys(preBuyersConf).map(preBuyer =>
