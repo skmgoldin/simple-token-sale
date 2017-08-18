@@ -4,6 +4,27 @@ const Sale = artifacts.require('./Sale.sol');
 const fs = require('fs');
 const BN = require('bn.js');
 
+const distributePreBuyersTokens = async function distributePreBuyersTokens(addresses, tokens) {
+  const BATCHSIZE = 30;
+  if (addresses.length !== tokens.length) {
+    throw new Error('The number of pre-buyers and pre-buyer token allocations do not match');
+  }
+
+  const addressesChunk = addresses.slice(0, BATCHSIZE);
+  const tokensChunk = tokens.slice(0, BATCHSIZE);
+  const sale = await Sale.deployed();
+  await sale.distributePreBuyersRewards(addressesChunk, tokensChunk);
+
+  if (addresses.length <= BATCHSIZE) {
+    return addressesChunk;
+  }
+
+  return addressesChunk.concat(await distributePreBuyersTokens(
+    addresses.slice(BATCHSIZE),
+    tokens.slice(BATCHSIZE),
+  ));
+};
+
 module.exports = (deployer, network, accounts) => {
   let saleConf;
   let tokenConf;
@@ -54,12 +75,9 @@ module.exports = (deployer, network, accounts) => {
     saleConf.price,
     saleConf.startBlock,
     saleConf.freezeBlock,
+    preBuyers.length,
   )
-    .then(() => Sale.deployed())
-    .then(sale => sale.distributePreBuyersRewards(
-      preBuyers,
-      preBuyersTokens,
-    ))
+    .then(() => distributePreBuyersTokens(preBuyers, preBuyersTokens))
     .then(() => Sale.deployed())
     .then(sale => sale.distributeFoundersRewards(
       founders,

@@ -23,6 +23,8 @@ contract Sale {
     uint public price;
     uint public startBlock;
     uint public freezeBlock;
+    uint public totalPreBuyers;
+    uint public preBuyersDispensedTo = 0;
     bool public emergencyFlag = false;
     bool public preSaleTokensDisbursed = false;
     bool public foundersTokensDisbursed = false;
@@ -79,7 +81,8 @@ contract Sale {
         string _tokenSymbol,
         uint _price,
         uint _startBlock,
-        uint _freezeBlock
+        uint _freezeBlock,
+        uint _totalPreBuyers
     ) {
         owner = _owner;
         wallet = _wallet;
@@ -87,6 +90,7 @@ contract Sale {
         price = _price;
         startBlock = _startBlock;
         freezeBlock = _freezeBlock;
+        totalPreBuyers = _totalPreBuyers;
 
         token.transfer(this, token.totalSupply());
         assert(token.balanceOf(this) == token.totalSupply());
@@ -107,10 +111,13 @@ contract Sale {
 
         for(uint i = 0; i < _preBuyers.length; i++) {
             token.transfer(_preBuyers[i], _preBuyersTokens[i]);
+            preBuyersDispensedTo += 1;
             TransferredPreBuyersReward(_preBuyers[i], _preBuyersTokens[i]);
         }
 
-        preSaleTokensDisbursed = true;
+        if(preBuyersDispensedTo == totalPreBuyers) {
+          preSaleTokensDisbursed = true;
+        }
     }
 
     /// @dev distributeTimelockedRewards(): private utility function called by constructor
