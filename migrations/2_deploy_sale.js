@@ -14,6 +14,7 @@ const distributePreBuyersTokens = async function distributePreBuyersTokens(addre
   const tokensChunk = tokens.slice(0, BATCHSIZE);
   const sale = await Sale.deployed();
   await sale.distributePreBuyersRewards(addressesChunk, tokensChunk);
+  console.log(`Distributed tokens to a batch of ${addressesChunk.length} pre-buyers`);
 
   if (addresses.length <= BATCHSIZE) {
     return addressesChunk;
