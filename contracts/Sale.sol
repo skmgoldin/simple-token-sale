@@ -94,7 +94,7 @@ contract Sale {
 
         token.transfer(this, token.totalSupply());
         assert(token.balanceOf(this) == token.totalSupply());
-        assert(token.balanceOf(this) == 10**18);
+        assert(token.balanceOf(this) == _tokenSupply);
     }
 
     /// @dev distributeFoundersRewards(): private utility function called by constructor
