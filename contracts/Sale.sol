@@ -1,7 +1,6 @@
 pragma solidity ^0.4.11;
 import "tokens/HumanStandardToken.sol";
 import "./Disbursement.sol";
-import "./Filter.sol";
 
 contract Sale {
 
@@ -11,7 +10,7 @@ contract Sale {
 
     event PurchasedTokens(address indexed purchaser, uint amount);
     event TransferredPreBuyersReward(address indexed preBuyer, uint amount);
-    event TransferredFoundersTokens(address vault, uint amount);
+    event TransferredTimelockedTokens(address beneficiary, address disburser, uint amount);
 
     /*
      * Storage
@@ -23,12 +22,15 @@ contract Sale {
     uint public price;
     uint public startBlock;
     uint public freezeBlock;
+
     uint public totalPreBuyers;
     uint public preBuyersDispensedTo = 0;
+    uint public totalTimelockedBeneficiaries;
+    uint public timeLockedBeneficiariesDisbursedTo = 0;
+
     bool public emergencyFlag = false;
     bool public preSaleTokensDisbursed = false;
-    bool public foundersTokensDisbursed = false;
-    address[] public filters;
+    bool public timelockedTokensDisbursed = false;
 
     /*
      * Modifiers
@@ -50,7 +52,7 @@ contract Sale {
     }
 
     modifier setupComplete {
-        assert(preSaleTokensDisbursed && foundersTokensDisbursed);
+        assert(preSaleTokensDisbursed && timelockedTokensDisbursed);
         _;
     }
 
@@ -82,7 +84,8 @@ contract Sale {
         uint _price,
         uint _startBlock,
         uint _freezeBlock,
-        uint _totalPreBuyers
+        uint _totalPreBuyers,
+        uint _totalTimelockedBeneficiaries
     ) {
         owner = _owner;
         wallet = _wallet;
@@ -91,6 +94,7 @@ contract Sale {
         startBlock = _startBlock;
         freezeBlock = _freezeBlock;
         totalPreBuyers = _totalPreBuyers;
+        totalTimelockedBeneficiaries = _totalTimelockedBeneficiaries;
 
         token.transfer(this, token.totalSupply());
         assert(token.balanceOf(this) == token.totalSupply());
@@ -121,53 +125,40 @@ contract Sale {
     }
 
     /// @dev distributeTimelockedRewards(): private utility function called by constructor
-    /// @param _founders an array of addresses specifying disbursement beneficiaries
-    /// @param _foundersTokens an array of integers specifying disbursement amounts
-    /// @param _founderTimelocks an array of UNIX timestamps specifying vesting dates
-    function distributeFoundersRewards(
-        address[] _founders,
-        uint[] _foundersTokens,
-        uint[] _founderTimelocks
+    // @param _founders an array of addresses specifying disbursement beneficiaries
+    // @param _foundersTokens an array of integers specifying disbursement amounts
+    // @param _founderTimelocks an array of UNIX timestamps specifying vesting dates
+    function distributeTimelockedTokens(
+        address[] _beneficiaries,
+        uint[] _beneficiariesTokens,
+        uint[] _timelocks,
+        uint[] _periods
     ) 
         public
         onlyOwner
     { 
         assert(preSaleTokensDisbursed);
-        assert(!foundersTokensDisbursed);
+        assert(!timelockedTokensDisbursed);
 
-        /* Total number of tokens to be disbursed for a given tranch. Used when
-           tokens are transferred to disbursement contracts. */
-        uint tokensPerTranch = 0;
-        // Alias of founderTimelocks.length for legibility
-        uint tranches = _founderTimelocks.length;
-        // The number of tokens which may be withdrawn per founder for each tranch
-        uint[] memory foundersTokensPerTranch = new uint[](_foundersTokens.length);
+        for(uint i = 0; i < _beneficiaries.length; i++) {
+          address beneficiary = _beneficiaries[i];
+          uint beneficiaryTokens = _beneficiariesTokens[i];
 
-        // Compute foundersTokensPerTranch and tokensPerTranch
-        for(uint i = 0; i < _foundersTokens.length; i++) {
-            foundersTokensPerTranch[i] = _foundersTokens[i]/tranches;
-            tokensPerTranch = tokensPerTranch + foundersTokensPerTranch[i];
+          Disbursement disbursement = new Disbursement(
+            beneficiary,
+            _periods[i],
+            _timelocks[i]
+          );
+          
+          token.transfer(disbursement, beneficiaryTokens);
+          timeLockedBeneficiariesDisbursedTo += 1;
+
+          TransferredTimelockedTokens(beneficiary, disbursement, beneficiaryTokens);
         }
 
-        /* Deploy disbursement and filter contract pairs, initialize both and store
-           filter addresses in filters array. Finally, transfer tokensPerTranch to
-           disbursement contracts. */
-        for(uint j = 0; j < tranches; j++) {
-            Filter filter = new Filter(_founders, foundersTokensPerTranch);
-            filters.push(filter);
-            Disbursement vault = new Disbursement(filter, 1, _founderTimelocks[j]);
-            // Give the disbursement contract the address of the token it disburses.
-            vault.setup(token);             
-            /* Give the filter contract the address of the disbursement contract
-               it access controls */
-            filter.setup(vault);             
-            // Transfer to the vault the tokens it is to disburse
-            token.transfer(vault, tokensPerTranch);
-            TransferredFoundersTokens(vault, tokensPerTranch);
+        if(timeLockedBeneficiariesDisbursedTo == totalTimelockedBeneficiaries) {
+          timelockedTokensDisbursed = true;
         }
-
-        assert(token.balanceOf(this) == 5 * 10**17);
-        foundersTokensDisbursed = true;
     }
 
     /// @dev purchaseToken(): function that exchanges ETH for tokens (main sale function)

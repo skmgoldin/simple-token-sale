@@ -1,0 +1,93 @@
+{
+  "0": {
+    "tranches": {
+      "0": {
+        "date": "21994675200",
+        "period": "1",
+        "amount": "110000000000000000"
+      }
+    },
+    "address": "0xC191B2DdC1c87A66a3974ffD6100749bCe7BA661"
+  },
+  "1": {
+    "tranches": {
+      "0": {
+        "date": "21994675200",
+        "period": "1",
+        "amount": "45000000000000000"
+      }
+    },
+    "address": "0x5A02DA435DDe5b2e81f430Afc1611a514f198234"
+  },
+  "2": {
+    "tranches": {
+      "0": {
+        "date": "21994675200",
+        "period": "1",
+        "amount": "27000000000000000"
+      }
+    },
+    "address": "0x294e78eD6320befB0BbbBbA97cd2b93606117A5C"
+  },
+  "3": {
+    "tranches": {
+      "0": {
+        "date": "21994675200",
+        "period": "1",
+        "amount": "18000000000000000"
+      }
+    },
+    "address": "0x6199AA9BdE63FfE9D0585a890b200B48Ae3808F1"
+  },
+  "4": {
+    "tranches": {
+      "0": {
+        "date": "21994675200",
+        "period": "1",
+        "amount": "56500000000000000"
+      }
+    },
+    "address": "0x2b9155118c6461f63c55BF7A11B10e66Ebb72c74"
+  },
+  "5": {
+    "tranches": {
+      "0": {
+        "date": "21994675200",
+        "period": "1",
+        "amount": "66000000000000000"
+      }
+    },
+    "address": "0x81Dd3e5acA36290254B19473C9342eC760e9aA0a"
+  },
+  "6": {
+    "tranches": {
+      "0": {
+        "date": "21994675200",
+        "period": "1",
+        "amount": "12500000000000000"
+      }
+    },
+    "address": "0x3314b8fdD9891d425D82B32b221a8b1171ea9d08"
+  },
+  "7": {
+    "tranches": {
+      "0": {
+        "date": "21994675200",
+        "period": "1",
+        "amount": "55000000000000000"
+      }
+    },
+    "address": "0x9742bf1e2A3d9855A8A4049aA5dE1A929d501529"
+  },
+  "8": {
+    "tranches": {
+      "0": {
+        "date": "21994675200",
+        "period": "1",
+        "amount": "10000000000000000"
+      }
+    },
+    "address": "0x73eA58A5Bf12c186EA26b0F2811DDa1f5b0161A3"
+  }
+}
+

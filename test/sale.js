@@ -12,13 +12,14 @@ const ethRPC = new EthRPC(new HttpProvider('http://localhost:8545'));
 const ethQuery = new EthQuery(new HttpProvider('http://localhost:8545'));
 
 const Sale = artifacts.require('./Sale.sol');
-const Filter = artifacts.require('./Filter.sol');
+const Disbursement = artifacts.require('./Disbursement.sol');
 
 contract('Sale', (accounts) => {
   const preBuyersConf = JSON.parse(fs.readFileSync('./conf/preBuyers.json'));
-  const foundersConf = JSON.parse(fs.readFileSync('./conf/founders.json'));
+  const timelocksConf = JSON.parse(fs.readFileSync('./conf/timelocks.json'));
   const saleConf = JSON.parse(fs.readFileSync('./conf/sale.json'));
   const tokenConf = JSON.parse(fs.readFileSync('./conf/token.json'));
+  const logs = JSON.parse(fs.readFileSync('./logs/logs.json'));
   const [owner, james, miguel, edwhale] = accounts;
 
   let tokensForSale;
@@ -47,26 +48,64 @@ contract('Sale', (accounts) => {
     return preSoldTokens.reduce((sum, value) => sum.add(new BN(value, 10)), new BN(0, 10));
   }
 
-  function getFounders() {
-    return Object.keys(foundersConf.founders);
+
+  function getTranchesForBeneficiary(addr) {
+    const beneficiary = timelocksConf[
+      Object.keys(timelocksConf).find((beneficiaryIndex) => {
+        const thisBeneficiary = timelocksConf[beneficiaryIndex];
+        return thisBeneficiary.address === addr;
+      })
+    ];
+
+    return beneficiary.tranches;
   }
 
-  function totalFoundersTokens() {
-    const foundersTokens = getFounders().map(curr =>
-      new BN(foundersConf.founders[curr].amount, 10));
-    return foundersTokens.reduce((sum, value) => sum.add(new BN(value, 10)), new BN(0, 10));
-  }
-
-  async function getFilter(index) {
-    const sale = await Sale.deployed();
-    const filterAddr = await sale.filters.call(index);
-    return Filter.at(filterAddr);
-  }
-
-  function getFoundersAddresses() {
-    return getFounders().map(curr =>
-      foundersConf.founders[curr].address,
+  function getDisburserByBeneficiaryAndTranch(beneficiary, tranch) {
+    const logForTranch = logs.find(log =>
+      log.args.beneficiary === beneficiary.toLowerCase() &&
+      log.args.amount === tranch.amount,
     );
+
+    if (logForTranch === undefined) { throw new Error(`Missing disburser for ${beneficiary}`); }
+
+    return Disbursement.at(logForTranch.args.disburser);
+  }
+
+  function getDisbursersForBeneficiary(beneficiary) {
+    const tranches = Object.keys(getTranchesForBeneficiary(beneficiary)).map(tranchIndex =>
+      getTranchesForBeneficiary(beneficiary)[tranchIndex],
+    );
+    return tranches.map(tranch =>
+      getDisburserByBeneficiaryAndTranch(beneficiary, tranch),
+    );
+  }
+
+  function getTimelockedBeneficiaries() {
+    return Object.keys(timelocksConf).map(beneficiaryIndex =>
+      timelocksConf[beneficiaryIndex],
+    );
+  }
+
+  function totalTimelockedTokens() {
+    function getDisburserTokenBalances() {
+      let disburserTokenBalances = [];
+
+      getTimelockedBeneficiaries().forEach((beneficiary) => {
+        const tranches = getTranchesForBeneficiary(beneficiary.address);
+        disburserTokenBalances = disburserTokenBalances.concat(
+          Object.keys(tranches).map((tranchIndex) => {
+            const tranch = tranches[tranchIndex];
+            return tranch.amount;
+          }),
+        );
+      });
+
+      return disburserTokenBalances;
+    }
+
+    const timelockedTokens = getDisburserTokenBalances();
+
+    return timelockedTokens.reduce((sum, value) => sum.add(new BN(value, 10)), new BN(0, 10));
   }
 
   function isSignerAccessFailure(err) {
@@ -120,7 +159,7 @@ contract('Sale', (accounts) => {
   }
 
   before(() => {
-    const tokensPreAllocated = totalPreSoldTokens().add(totalFoundersTokens());
+    const tokensPreAllocated = totalPreSoldTokens().add(totalTimelockedTokens());
     saleConf.price = new BN(saleConf.price, 10);
     saleConf.startBlock = new BN(saleConf.startBlock, 10);
     tokenConf.initialAmount = new BN(tokenConf.initialAmount, 10);
@@ -129,7 +168,7 @@ contract('Sale', (accounts) => {
 
   describe('Initial token issuance', () => {
     const wrongTokenBalance = 'has an incorrect token balance.';
-    it('should instantiate preBuyers with the proper number of tokens', () => {
+    it('should instantiate preBuyers with the proper number of tokens', () =>
       Promise.all(
         Object.keys(preBuyersConf).map(async (curr) => {
           const tokenBalance =
@@ -140,24 +179,27 @@ contract('Sale', (accounts) => {
             tokenBalance.toString(10), expected.toString(10), errMsg,
           );
         }),
-      );
-    });
-    it('should instantiate disburser contracts with the proper number of tokens', () => {
-      const totalDisbursers =
-        new BN(Object.keys(foundersConf.vestingDates).length, 10);
+      ),
+    );
+    it('should instantiate disburser contracts with the proper number of tokens', async () =>
       Promise.all(
-        Object.keys(foundersConf.vestingDates).map(async (curr, i) => {
-          const filter = await getFilter(i);
-          const disburserAddr = await filter.disburser.call();
-          const tokenBalance = await getTokenBalanceOf(disburserAddr);
-          const expected = totalFoundersTokens().div(totalDisbursers);
-          const errMsg = `A disburser contract ${wrongTokenBalance}`;
-          assert.strictEqual(
-            tokenBalance.toString(10), expected.toString(10), errMsg,
+        getTimelockedBeneficiaries().map(async (beneficiary) => {
+          const beneficiaryTranches = getTranchesForBeneficiary(beneficiary.address);
+          return Promise.all(
+            Object.keys(beneficiaryTranches).map(async (tranchIndex) => {
+              const tranch = beneficiary.tranches[tranchIndex];
+              const disburser = getDisburserByBeneficiaryAndTranch(beneficiary.address, tranch);
+              const tokenBalance = await getTokenBalanceOf(disburser.address);
+              const expected = tranch.amount;
+              const errMsg = `A disburser contract ${wrongTokenBalance}`;
+              assert.strictEqual(
+                tokenBalance.toString(10), expected.toString(10), errMsg,
+              );
+            }),
           );
         }),
-      );
-    });
+      ),
+    );
     it('should instantiate the public sale with the total supply of tokens ' +
        'minus the sum of tokens pre-sold.', async () => {
       const tokenBalance = await getTokenBalanceOf(Sale.address);
@@ -591,54 +633,52 @@ contract('Sale', (accounts) => {
   });
 
   describe('Filters and disbursers', () => {
+    /*
     const earlyAccessFailure = 'Founder was able to withdraw from a filter ' +
       'earlier than should have been possible';
     const doubleAccessFailure = 'Founder was able to withdraw from a filter ' +
       'they had already withdrawn from';
-    const balanceFailure = 'The founder\'s balance was not as expected after ' +
+    const balanceFailure = 'The beneficiary\'s balance was not as expected after ' +
       'interacting with a filter';
+      */
 
     function signerAccessFailureFor(address) {
       return `WARNING: could not unlock account ${address}.\n` +
-             'This is probably because this founder\'s private key is not generated \n' +
+             'This is probably because this beneficiary\'s private key is not generated \n' +
              'by the same mnemonic as your owner privKey. This is probably fine, but \n' +
              'it means we can\'t run this test.';
     }
 
-    it('Should not allow founders to withdraw tokens before the vesting date', async () =>
-      Promise.all(getFoundersAddresses().map(async (founder) => {
-        let signerAccessFailure = false;
-        const firstFilter = await getFilter(0);
-        const secondFilter = await getFilter(1);
-        try {
-          await firstFilter.claim({ from: founder });
-          assert(false, earlyAccessFailure);
-        } catch (err) {
-          if (isSignerAccessFailure(err)) {
-            signerAccessFailure = true;
-            console.log(signerAccessFailureFor(founder));
-          } else {
-            const errMsg = err.toString();
-            assert(isEVMException(err), errMsg);
-          }
-        }
-        if (!signerAccessFailure) {
-          try {
-            await secondFilter.claim({ from: founder });
-            assert(false, earlyAccessFailure);
-          } catch (err) {
-            const errMsg = err.toString();
-            assert(isEVMException(err), errMsg);
-          }
-
-          const founderBalance = await getTokenBalanceOf(founder);
-          const expectedBalance = new BN('0', 10);
-          assert.equal(expectedBalance.toString(10), founderBalance.toString(10),
-            balanceFailure);
-        }
-      })),
+    it('Should not allow beneficiarys to withdraw tokens before the vesting date', async () =>
+      Promise.all(
+        getTimelockedBeneficiaries().map(async (beneficiary) => {
+          const disbursers = getDisbursersForBeneficiary(beneficiary.address);
+          return Promise.all(
+            disbursers.map(async (disburser) => {
+              try {
+                const maxWithdraw = await as(beneficiary.address, disburser.calcMaxWithdraw.call);
+                const expected = '0';
+                assert.strictEqual(maxWithdraw.toString(10), expected,
+                  `Expected maxWithdraw to be zero for ${beneficiary.address}`);
+                await as(beneficiary.address, disburser.withdraw, beneficiary.address,
+                  maxWithdraw + 1);
+                assert(false, `${beneficiary.address} was able to withdraw timelocked tokens early`);
+              } catch (err) {
+                if (isSignerAccessFailure(err)) {
+                  console.log(signerAccessFailureFor(beneficiary.address));
+                } else {
+                  assert(isEVMException(err), err.toString());
+                }
+              }
+            }),
+          );
+        }),
+      ),
     );
-    it('Should allow founders to withdraw from the first tranch after that ' +
+  });
+
+  /*
+    it('Should allow beneficiarys to withdraw from the first tranch after that ' +
        'vesting date', () =>
       new Promise((resolve) => {
         ethRPC.sendAsync({
@@ -647,30 +687,30 @@ contract('Sale', (accounts) => {
         }, async (rpcErr) => {
           if (rpcErr) { throw rpcErr; }
           await Promise.all(
-            getFounders().map(async (curr) => {
+            getTimelockedBeneficiaries().map(async (curr) => {
               let signerAccessFailure = false;
-              const founder = foundersConf.founders[curr].address;
+              const beneficiary = timelocksConf.beneficiarys[curr].address;
               const firstFilter = await getFilter(0);
               try {
-                await firstFilter.claim({ from: founder });
+                await firstFilter.claim({ from: beneficiary });
               } catch (err) {
                 if (isSignerAccessFailure(err)) {
                   signerAccessFailure = true;
-                  console.log(signerAccessFailureFor(founder));
+                  console.log(signerAccessFailureFor(beneficiary));
                 } else {
                   throw err;
                 }
               }
               if (!signerAccessFailure) {
-                const foundersBalance = await getTokenBalanceOf(founder);
-                const expectedBalance = new BN(foundersConf.founders[curr].amount, 10)
+                const beneficiarysBalance = await getTokenBalanceOf(beneficiary);
+                const expectedBalance = new BN(timelocksConf.beneficiarys[curr].amount, 10)
                   .div(new BN('2', 10));
-                assert.equal(foundersBalance.toString(10),
+                assert.equal(beneficiarysBalance.toString(10),
                   expectedBalance.toString(10),
                   balanceFailure);
                 const secondFilter = await getFilter(1);
                 try {
-                  await secondFilter.claim({ from: founder });
+                  await secondFilter.claim({ from: beneficiary });
                   assert(false, earlyAccessFailure);
                 } catch (err) {
                   const errMsg = err.toString();
@@ -683,7 +723,9 @@ contract('Sale', (accounts) => {
         });
       }),
     );
-    it('Should allow founders to withdraw from the second tranch after that ' +
+
+  /*
+    it('Should allow beneficiarys to withdraw from the second tranch after that ' +
        'vesting date', () =>
       new Promise((resolve) => {
         ethRPC.sendAsync({
@@ -692,17 +734,17 @@ contract('Sale', (accounts) => {
         }, async (rpcErr) => {
           if (rpcErr) { throw rpcErr; }
           await Promise.all(
-            getFounders().map(async (curr) => {
+            getTimelockedBeneficiaries().map(async (curr) => {
               let signerAccessFailure = false;
-              const founder = foundersConf.founders[curr].address;
+              const beneficiary = timelocksConf.beneficiarys[curr].address;
               const firstFilter = await getFilter(0);
               try {
-                await firstFilter.claim({ from: founder });
+                await firstFilter.claim({ from: beneficiary });
                 assert(false, doubleAccessFailure);
               } catch (err) {
                 if (isSignerAccessFailure(err)) {
                   signerAccessFailure = true;
-                  console.log(signerAccessFailureFor(founder));
+                  console.log(signerAccessFailureFor(beneficiary));
                 } else {
                   const errMsg = err.toString();
                   assert(isEVMException(err), errMsg);
@@ -710,10 +752,10 @@ contract('Sale', (accounts) => {
               }
               if (!signerAccessFailure) {
                 const secondFilter = await getFilter(1);
-                await secondFilter.claim({ from: founder });
-                const foundersBalance = await getTokenBalanceOf(founder);
-                const expectedBalance = foundersConf.founders[curr].amount;
-                assert.equal(foundersBalance.toString(10),
+                await secondFilter.claim({ from: beneficiary });
+                const beneficiarysBalance = await getTokenBalanceOf(beneficiary);
+                const expectedBalance = timelocksConf.beneficiarys[curr].amount;
+                assert.equal(beneficiarysBalance.toString(10),
                   expectedBalance.toString(10),
                   balanceFailure);
               }
@@ -724,4 +766,5 @@ contract('Sale', (accounts) => {
       }),
     );
   });
+  */
 });
