@@ -150,6 +150,7 @@ contract Sale {
             _timelocks[i]
           );
           
+          disbursement.setup(token);
           token.transfer(disbursement, beneficiaryTokens);
           timeLockedBeneficiariesDisbursedTo += 1;
 
