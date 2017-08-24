@@ -675,96 +675,83 @@ contract('Sale', (accounts) => {
         }),
       ),
     );
-  });
 
-  /*
-    it('Should allow beneficiarys to withdraw from the first tranch after that ' +
-       'vesting date', () =>
-      new Promise((resolve) => {
-        ethRPC.sendAsync({
-          method: 'evm_increaseTime',
-          params: [34190000], // 13 months in seconds
-        }, async (rpcErr) => {
-          if (rpcErr) { throw rpcErr; }
-          await Promise.all(
-            getTimelockedBeneficiaries().map(async (curr) => {
-              let signerAccessFailure = false;
-              const beneficiary = timelocksConf.beneficiarys[curr].address;
-              const firstFilter = await getFilter(0);
-              try {
-                await firstFilter.claim({ from: beneficiary });
-              } catch (err) {
-                if (isSignerAccessFailure(err)) {
-                  signerAccessFailure = true;
-                  console.log(signerAccessFailureFor(beneficiary));
-                } else {
-                  throw err;
-                }
-              }
-              if (!signerAccessFailure) {
-                const beneficiarysBalance = await getTokenBalanceOf(beneficiary);
-                const expectedBalance = new BN(timelocksConf.beneficiarys[curr].amount, 10)
-                  .div(new BN('2', 10));
-                assert.equal(beneficiarysBalance.toString(10),
-                  expectedBalance.toString(10),
-                  balanceFailure);
-                const secondFilter = await getFilter(1);
-                try {
-                  await secondFilter.claim({ from: beneficiary });
-                  assert(false, earlyAccessFailure);
-                } catch (err) {
-                  const errMsg = err.toString();
-                  assert(isEVMException(err), errMsg);
-                }
-              }
-            }),
-          );
-          resolve();
+    it('Should allow beneficiarys to withdraw from their disbursers after they vest', async () => {
+      function getEVMSnapshot() {
+        return new Promise((resolve, reject) => {
+          ethRPC.sendAsync({
+            method: 'evm_snapshot',
+          }, async (snapshotErr, snapshotID) => {
+            if (snapshotErr) { reject(snapshotErr); }
+            resolve(snapshotID);
+          });
         });
-      }),
-    );
+      }
 
-  /*
-    it('Should allow beneficiarys to withdraw from the second tranch after that ' +
-       'vesting date', () =>
-      new Promise((resolve) => {
-        ethRPC.sendAsync({
-          method: 'evm_increaseTime',
-          params: [18410000], // 7 months in seconds
-        }, async (rpcErr) => {
-          if (rpcErr) { throw rpcErr; }
-          await Promise.all(
-            getTimelockedBeneficiaries().map(async (curr) => {
-              let signerAccessFailure = false;
-              const beneficiary = timelocksConf.beneficiarys[curr].address;
-              const firstFilter = await getFilter(0);
-              try {
-                await firstFilter.claim({ from: beneficiary });
-                assert(false, doubleAccessFailure);
-              } catch (err) {
-                if (isSignerAccessFailure(err)) {
-                  signerAccessFailure = true;
-                  console.log(signerAccessFailureFor(beneficiary));
-                } else {
-                  const errMsg = err.toString();
-                  assert(isEVMException(err), errMsg);
-                }
-              }
-              if (!signerAccessFailure) {
-                const secondFilter = await getFilter(1);
-                await secondFilter.claim({ from: beneficiary });
-                const beneficiarysBalance = await getTokenBalanceOf(beneficiary);
-                const expectedBalance = timelocksConf.beneficiarys[curr].amount;
-                assert.equal(beneficiarysBalance.toString(10),
-                  expectedBalance.toString(10),
-                  balanceFailure);
-              }
-            }),
-          );
-          resolve();
+      function makeEVMRevert(_snapshot) {
+        return new Promise((resolve, reject) => {
+          ethRPC.sendAsync({
+            method: 'evm_revert',
+            params: [_snapshot],
+          }, async (revertErr) => {
+            if (revertErr) { reject(revertErr); }
+            resolve();
+          });
         });
-      }),
-    );
+      }
+
+      function makeEVMIncreaseTime(seconds) {
+        return new Promise((resolve, reject) => {
+          ethRPC.sendAsync({
+            method: 'evm_increaseTime',
+            params: [seconds],
+          }, async (increaseTimeErr) => {
+            if (increaseTimeErr) { reject(increaseTimeErr); }
+            resolve();
+          });
+        });
+      }
+
+      let snapshot = await getEVMSnapshot();
+
+      async function tranchWithdraw(tranches, beneficiary) {
+        const beneficiaryStartingBalance = await getTokenBalanceOf(beneficiary.address);
+        const tranch = tranches[0];
+        await makeEVMRevert(snapshot);
+        snapshot = await getEVMSnapshot();
+        await makeEVMIncreaseTime(Number.parseInt(tranch.date, 10));
+        const disburser =
+          getDisburserByBeneficiaryAndTranch(beneficiary.address, tranch);
+        try {
+          await as(beneficiary.address, disburser.withdraw,
+            beneficiary.address, new BN(tranch.amount, 10));
+          const beneficiaryBalance = await getTokenBalanceOf(beneficiary.address);
+          const expected = beneficiaryStartingBalance.add(new BN(tranch.amount, 10));
+          const errMsg = 'Beneficiary has an unaccountable balance';
+          assert.strictEqual(beneficiaryBalance.toString(10), expected.toString(10), errMsg);
+        } catch (err) {
+          if (isSignerAccessFailure(err)) {
+            console.log(signerAccessFailureFor(beneficiary.address));
+          } else {
+            throw err;
+          }
+        }
+
+        if (tranches.length === 1) { return undefined; }
+        return tranchWithdraw(tranches.slice(1), beneficiary);
+      }
+
+      async function beneficiaryWithdraw(beneficiaries) {
+        const beneficiary = beneficiaries[0];
+        const tranches = Object.keys(getTranchesForBeneficiary(beneficiary.address))
+          .map(tranchIndex => getTranchesForBeneficiary(beneficiary.address)[tranchIndex]);
+        await tranchWithdraw(tranches, beneficiary);
+        if (beneficiaries.length === 1) { return undefined; }
+        return beneficiaryWithdraw(beneficiaries.slice(1));
+      }
+
+      await beneficiaryWithdraw(getTimelockedBeneficiaries());
+    });
   });
-  */
 });
+
