@@ -101,7 +101,7 @@ contract Sale {
         assert(token.balanceOf(this) == _tokenSupply);
     }
 
-    /// @dev distributeFoundersRewards(): private utility function called by constructor
+    /// @dev distributePreBuyersRewards(): private utility function called by constructor
     /// @param _preBuyers an array of addresses to which awards will be distributed
     /// @param _preBuyersTokens an array of integers specifying preBuyers rewards
     function distributePreBuyersRewards(
@@ -124,10 +124,11 @@ contract Sale {
         }
     }
 
-    /// @dev distributeTimelockedRewards(): private utility function called by constructor
-    // @param _founders an array of addresses specifying disbursement beneficiaries
-    // @param _foundersTokens an array of integers specifying disbursement amounts
-    // @param _founderTimelocks an array of UNIX timestamps specifying vesting dates
+    /// @dev distributeTimelockedTokens(): private utility function called by constructor
+    /// @param _beneficiaries an array of addresses specifying disbursement beneficiaries
+    /// @param _beneficiariesTokens an array of integers specifying disbursement amounts
+    /// @param _timelocks an array of UNIX timestamps specifying vesting dates
+    /// @param _periods an array of durations in seconds specifying vesting periods
     function distributeTimelockedTokens(
         address[] _beneficiaries,
         uint[] _beneficiariesTokens,
