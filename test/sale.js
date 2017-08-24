@@ -168,6 +168,7 @@ contract('Sale', (accounts) => {
 
   describe('Initial token issuance', () => {
     const wrongTokenBalance = 'has an incorrect token balance.';
+
     it('should instantiate preBuyers with the proper number of tokens', () =>
       Promise.all(
         Object.keys(preBuyersConf).map(async (curr) => {
@@ -181,6 +182,7 @@ contract('Sale', (accounts) => {
         }),
       ),
     );
+
     it('should instantiate disburser contracts with the proper number of tokens', async () =>
       Promise.all(
         getTimelockedBeneficiaries().map(async (beneficiary) => {
@@ -200,6 +202,7 @@ contract('Sale', (accounts) => {
         }),
       ),
     );
+
     it('should instantiate the public sale with the total supply of tokens ' +
        'minus the sum of tokens pre-sold.', async () => {
       const tokenBalance = await getTokenBalanceOf(Sale.address);
@@ -210,8 +213,10 @@ contract('Sale', (accounts) => {
       );
     });
   });
+
   describe('Instantiation', () => {
     const badInitialization = 'was not initialized properly';
+
     it(`should instantiate with the price set to ${saleConf.price} Wei.`, async () => {
       const sale = await Sale.deployed();
       const price = await sale.price.call();
@@ -219,6 +224,7 @@ contract('Sale', (accounts) => {
       const errMsg = `The price ${badInitialization}`;
       assert.strictEqual(price.toString(10), expected.toString(10), errMsg);
     });
+
     it(`should instantiate with the owner set to ${saleConf.owner}.`, async () => {
       const sale = await Sale.deployed();
       const actualOwner = await sale.owner.call();
@@ -226,6 +232,7 @@ contract('Sale', (accounts) => {
       const errMsg = `The owner ${badInitialization}`;
       assert.strictEqual(actualOwner.valueOf(), expected, errMsg);
     });
+
     it(`should instantiate with the wallet set to ${saleConf.wallet}.`, async () => {
       const sale = await Sale.deployed();
       const wallet = await sale.wallet.call();
@@ -233,6 +240,7 @@ contract('Sale', (accounts) => {
       const errMsg = `The wallet ${badInitialization}`;
       assert.strictEqual(wallet.valueOf(), expected.toLowerCase(), errMsg);
     });
+
     it(`should instantiate with the startBlock set to ${saleConf.startBlock}.`, async () => {
       const sale = await Sale.deployed();
       const startBlock = await sale.startBlock.call();
@@ -247,6 +255,7 @@ contract('Sale', (accounts) => {
   describe('Owner-only functions', () => {
     const nonOwnerAccessError = 'A non-owner was able to';
     const ownerAccessError = 'An owner was unable able to';
+
     it('should not allow a non-owner to change the price.', async () => {
       const sale = await Sale.deployed();
       try {
@@ -260,6 +269,7 @@ contract('Sale', (accounts) => {
       const errMsg = `${nonOwnerAccessError} change the price`;
       assert.strictEqual(price.toString(10), expected.toString(10), errMsg);
     });
+
     it('should not allow a non-owner to change the startBlock.', async () => {
       const sale = await Sale.deployed();
       try {
@@ -273,6 +283,7 @@ contract('Sale', (accounts) => {
       const errMsg = `${nonOwnerAccessError} change the start block`;
       assert.strictEqual(startBlock.toString(10), expected.toString(10), errMsg);
     });
+
     it('should not allow a non-owner to change the owner', async () => {
       const sale = await Sale.deployed();
       try {
@@ -286,6 +297,7 @@ contract('Sale', (accounts) => {
       const errMsg = `${nonOwnerAccessError} change the owner`;
       assert.strictEqual(actualOwner.toString(), expected.toString(), errMsg);
     });
+
     it('should not allow a non-owner to change the wallet', async () => {
       const sale = await Sale.deployed();
       try {
@@ -299,6 +311,7 @@ contract('Sale', (accounts) => {
       const errMsg = `${nonOwnerAccessError} change the wallet`;
       assert.strictEqual(wallet.toString(), expected.toLowerCase(), errMsg);
     });
+
     it('should not allow a non-owner to activate the emergencyToggle', async () => {
       const sale = await Sale.deployed();
       try {
@@ -312,6 +325,7 @@ contract('Sale', (accounts) => {
       const errMsg = `${nonOwnerAccessError} change the emergencyToggle`;
       assert.strictEqual(emergencyFlag, expected, errMsg);
     });
+
     it('should change the owner to miguel.', async () => {
       const sale = await Sale.deployed();
       await as(saleConf.owner, sale.changeOwner, miguel);
@@ -321,6 +335,7 @@ contract('Sale', (accounts) => {
       assert.strictEqual(actualOwner, expected, errMsg);
       await as(miguel, sale.changeOwner, saleConf.owner);
     });
+
     it('should change the price to 2666.', async () => {
       const sale = await Sale.deployed();
       await as(owner, sale.changePrice, 2666);
@@ -330,6 +345,7 @@ contract('Sale', (accounts) => {
       assert.strictEqual(price.toString(10), expected.toString(10), errMsg);
       await as(owner, sale.changePrice, saleConf.price);
     });
+
     it('should change the startBlock to 2666.', async () => {
       const sale = await Sale.deployed();
       await as(owner, sale.changeStartBlock, 2666);
@@ -339,6 +355,7 @@ contract('Sale', (accounts) => {
       assert.strictEqual(price.toString(10), expected.toString(10), errMsg);
       await as(owner, sale.changeStartBlock, saleConf.startBlock);
     });
+
     it('should change the wallet address', async () => {
       const newWallet = '0x0000000000000000000000000000000000000001';
       const sale = await Sale.deployed();
@@ -349,6 +366,7 @@ contract('Sale', (accounts) => {
       assert.strictEqual(wallet, expected, errMsg);
       await as(owner, sale.changeWallet, saleConf.wallet);
     });
+
     it('should activate the emergencyFlag.', async () => {
       const sale = await Sale.deployed();
       await as(owner, sale.emergencyToggle);
@@ -362,6 +380,7 @@ contract('Sale', (accounts) => {
 
   describe('Pre-sale period', () => {
     const earlyPurchaseError = ' was able to purchase tokens early';
+
     it('should reject a purchase from James.', async () => {
       const startingBalance = await getTokenBalanceOf(james);
       try {
@@ -401,6 +420,7 @@ contract('Sale', (accounts) => {
       const errMsg = 'The owner was able to change the price after the freeze block';
       assert.strictEqual(price.toString(10), expected.toString(10), errMsg);
     });
+
     it('should transfer 1 token to James.', async () => {
       const startingBalance = await getTokenBalanceOf(james);
       const purchaseAmount = new BN('1', 10);
@@ -410,6 +430,7 @@ contract('Sale', (accounts) => {
       const errMsg = balanceError;
       assert.strictEqual(finalBalance.toString(10), expected.toString(10), errMsg);
     });
+
     it('should transfer 10 tokens to Miguel.', async () => {
       const startingBalance = await getTokenBalanceOf(miguel);
       const purchaseAmount = new BN('10', 10);
@@ -419,6 +440,7 @@ contract('Sale', (accounts) => {
       const errMsg = balanceError;
       assert.strictEqual(finalBalance.toString(10), expected.toString(10), errMsg);
     });
+
     it('should transfer 100 tokens to Edwhale.', async () => {
       const startingBalance = await getTokenBalanceOf(edwhale);
       const purchaseAmount = new BN('100', 10);
@@ -433,10 +455,12 @@ contract('Sale', (accounts) => {
   describe('Emergency stop', () => {
     const purchaseInStopError = ' was able to purchase during the emergency stop';
     const balanceError = 'A balance was not as expected following a purchase';
+
     before(async () => {
       const sale = await Sale.deployed();
       await as(owner, sale.emergencyToggle);
     });
+
     it('should not transfer 1 token to James.', async () => {
       const startingBalance = await getTokenBalanceOf(james);
       const purchaseAmount = new BN('1', 10);
@@ -453,6 +477,7 @@ contract('Sale', (accounts) => {
       const errMsg = balanceError;
       assert.strictEqual(finalBalance.toString(10), expected.toString(10), errMsg);
     });
+
     it('should not transfer 10 tokens to Miguel.', async () => {
       const startingBalance = await getTokenBalanceOf(miguel);
       const purchaseAmount = new BN('10', 10);
@@ -469,6 +494,7 @@ contract('Sale', (accounts) => {
       const errMsg = balanceError;
       assert.strictEqual(finalBalance.toString(10), expected.toString(10), errMsg);
     });
+
     it('should not transfer 100 tokens to Edwhale.', async () => {
       const startingBalance = await getTokenBalanceOf(edwhale);
       const purchaseAmount = new BN('100', 10);
@@ -485,6 +511,7 @@ contract('Sale', (accounts) => {
       const errMsg = balanceError;
       assert.strictEqual(finalBalance.toString(10), expected.toString(10), errMsg);
     });
+
     after(async () => {
       const sale = await Sale.deployed();
       await as(owner, sale.emergencyToggle);
@@ -515,6 +542,7 @@ contract('Sale', (accounts) => {
         finalBalance.toString(10), expected.toString(10), errMsg,
       );
     });
+
     it('should return excess Wei to Edwhale', async () => {
       const startingBalance = await ethQuery.getBalance(edwhale);
       const gasPrice = await ethQuery.gasPrice();
@@ -536,6 +564,7 @@ contract('Sale', (accounts) => {
         finalBalance.toString(10), expected.toString(10), errMsg,
       );
     });
+
     it('should transfer all the remaining tokens to Edwhale.', async () => {
       const startingBalance = await getTokenBalanceOf(edwhale);
       const saleBalance = await getTokenBalanceOf(Sale.address);
@@ -550,6 +579,7 @@ contract('Sale', (accounts) => {
   describe('Post-sale period', () => {
     const balanceError = 'A balance was not as expected following a purchase';
     const sellOutError = ' was able to purchase when the sale was sold out';
+
     it('should not transfer 1 token to James.', async () => {
       const startingBalance = await getTokenBalanceOf(james);
       const purchaseAmount = new BN('1', 10);
@@ -566,6 +596,7 @@ contract('Sale', (accounts) => {
       const errMsg = balanceError;
       assert.strictEqual(finalBalance.toString(10), expected.toString(10), errMsg);
     });
+
     it('should not transfer 10 tokens to Miguel.', async () => {
       const startingBalance = await getTokenBalanceOf(miguel);
       const purchaseAmount = new BN('10', 10);
@@ -582,6 +613,7 @@ contract('Sale', (accounts) => {
       const errMsg = balanceError;
       assert.strictEqual(finalBalance.toString(10), expected.toString(10), errMsg);
     });
+
     it('should not transfer 100 tokens to Edwhale.', async () => {
       const startingBalance = await getTokenBalanceOf(edwhale);
       const purchaseAmount = new BN('100', 10);
@@ -598,18 +630,21 @@ contract('Sale', (accounts) => {
       const errMsg = balanceError;
       assert.strictEqual(finalBalance.toString(10), expected.toString(10), errMsg);
     });
+
     it('should report the proper sum of Wei in the wallet.', async () => {
       const balance = await ethQuery.getBalance(saleConf.wallet);
       const expected = tokensForSale.mul(saleConf.price);
       const errMsg = 'The amount of Ether in the wallet is not what it should be at sale end';
       assert.strictEqual(balance.toString(10), expected.toString(10), errMsg);
     });
+
     it('should report a zero balance for the sale contract.', async () => {
       const balance = await getTokenBalanceOf(Sale.address);
       const expected = new BN('0', 10);
       const errMsg = 'The sale contract still has tokens in it when it should be sold out';
       assert.strictEqual(balance.toString(10), expected.toString(10), errMsg);
     });
+
     it('should allow Edwhale to transfer 10 tokens to James.', async () => {
       const transferAmount = new BN('10', 10);
       const edwhaleStartingBalance = await getTokenBalanceOf(edwhale);
@@ -633,15 +668,6 @@ contract('Sale', (accounts) => {
   });
 
   describe('Filters and disbursers', () => {
-    /*
-    const earlyAccessFailure = 'Founder was able to withdraw from a filter ' +
-      'earlier than should have been possible';
-    const doubleAccessFailure = 'Founder was able to withdraw from a filter ' +
-      'they had already withdrawn from';
-    const balanceFailure = 'The beneficiary\'s balance was not as expected after ' +
-      'interacting with a filter';
-      */
-
     function signerAccessFailureFor(address) {
       return `WARNING: could not unlock account ${address}.\n` +
              'This is probably because this beneficiary\'s private key is not generated \n' +
@@ -662,7 +688,8 @@ contract('Sale', (accounts) => {
                   `Expected maxWithdraw to be zero for ${beneficiary.address}`);
                 await as(beneficiary.address, disburser.withdraw, beneficiary.address,
                   maxWithdraw + 1);
-                assert(false, `${beneficiary.address} was able to withdraw timelocked tokens early`);
+                assert(false,
+                  `${beneficiary.address} was able to withdraw timelocked tokens early`);
               } catch (err) {
                 if (isSignerAccessFailure(err)) {
                   console.log(signerAccessFailureFor(beneficiary.address));
@@ -715,13 +742,16 @@ contract('Sale', (accounts) => {
       let snapshot = await getEVMSnapshot();
 
       async function tranchWithdraw(tranches, beneficiary) {
-        const beneficiaryStartingBalance = await getTokenBalanceOf(beneficiary.address);
         const tranch = tranches[0];
+
         await makeEVMRevert(snapshot);
         snapshot = await getEVMSnapshot();
         await makeEVMIncreaseTime(Number.parseInt(tranch.date, 10));
+
+        const beneficiaryStartingBalance = await getTokenBalanceOf(beneficiary.address);
         const disburser =
           getDisburserByBeneficiaryAndTranch(beneficiary.address, tranch);
+
         try {
           await as(beneficiary.address, disburser.withdraw,
             beneficiary.address, new BN(tranch.amount, 10));
