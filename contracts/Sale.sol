@@ -172,15 +172,13 @@ contract Sale {
         notInEmergency
     {
         /* Calculate whether any of the msg.value needs to be returned to
-           the sender. The tokenPurchase is the actual number of tokens which
-           will be purchased once any excessAmount included in the msg.value
-           is removed from the purchaseAmount. */
+           the sender. The purchaseAmount is the actual number of tokens which
+           will be purchased. */
+        uint purchaseAmount = msg.value / price;
         uint excessAmount = msg.value % price;
-        uint purchaseAmount = msg.value - excessAmount;
-        uint tokenPurchase = purchaseAmount / price;
 
         // Cannot purchase more tokens than this contract has available to sell
-        require(tokenPurchase <= token.balanceOf(this));
+        require(purchaseAmount <= token.balanceOf(this));
 
         // Return any excess msg.value
         if (excessAmount > 0) {
@@ -188,12 +186,12 @@ contract Sale {
         }
 
         // Forward received ether minus any excessAmount to the wallet
-        wallet.transfer(purchaseAmount);
+        wallet.transfer(this.balance);
 
         // Transfer the sum of tokens tokenPurchase to the msg.sender
-        token.transfer(msg.sender, tokenPurchase);
+        token.transfer(msg.sender, purchaseAmount);
 
-        PurchasedTokens(msg.sender, tokenPurchase);
+        PurchasedTokens(msg.sender, purchaseAmount);
     }
 
     /*
