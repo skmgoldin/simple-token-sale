@@ -22,6 +22,7 @@ contract Sale {
     uint public price;
     uint public startBlock;
     uint public freezeBlock;
+    uint public endBlock;
 
     uint public totalPreBuyers;
     uint public preBuyersDispensedTo = 0;
@@ -38,6 +39,11 @@ contract Sale {
 
     modifier saleStarted {
         require(block.number >= startBlock);
+        _;
+    }
+
+    modifier saleNotEnded {
+        require(block.number <= endBlock);
         _;
     }
 
@@ -67,7 +73,7 @@ contract Sale {
 
     /// @dev Sale(): constructor for Sale contract
     /// @param _owner the address which owns the sale, can access owner-only functions
-    /// @param _wallet the sale's beneficiary address 
+    /// @param _wallet the sale's beneficiary address
     /// @param _tokenSupply the total number of tokens to mint
     /// @param _tokenName the token's human-readable name
     /// @param _tokenDecimals the number of display decimals in token balances
@@ -99,6 +105,8 @@ contract Sale {
         token.transfer(this, token.totalSupply());
         assert(token.balanceOf(this) == token.totalSupply());
         assert(token.balanceOf(this) == _tokenSupply);
+
+        endBlock = 9999999999999; // Arbitrarily large number that won't be reached
     }
 
     /// @dev distributePreBuyersRewards(): private utility function called by constructor
@@ -107,10 +115,10 @@ contract Sale {
     function distributePreBuyersRewards(
         address[] _preBuyers,
         uint[] _preBuyersTokens
-    ) 
+    )
         public
         onlyOwner
-    { 
+    {
         assert(!preSaleTokensDisbursed);
 
         for(uint i = 0; i < _preBuyers.length; i++) {
@@ -134,10 +142,10 @@ contract Sale {
         uint[] _beneficiariesTokens,
         uint[] _timelocks,
         uint[] _periods
-    ) 
+    )
         public
         onlyOwner
-    { 
+    {
         assert(preSaleTokensDisbursed);
         assert(!timelockedTokensDisbursed);
 
@@ -150,7 +158,7 @@ contract Sale {
             _periods[i],
             _timelocks[i]
           );
-          
+
           disbursement.setup(token);
           token.transfer(disbursement, beneficiaryTokens);
           timeLockedBeneficiariesDisbursedTo += 1;
@@ -167,6 +175,7 @@ contract Sale {
     /// @notice You're about to purchase the equivalent of `msg.value` Wei in tokens
     function purchaseTokens()
         saleStarted
+        saleNotEnded
         payable
         setupComplete
         notInEmergency
@@ -231,6 +240,14 @@ contract Sale {
 
         freezeBlock = _newBlock - (startBlock - freezeBlock);
         startBlock = _newBlock;
+    }
+
+    function changeEndBlock(uint _newBlock)
+        onlyOwner
+        notFrozen
+    {
+        require(_newBlock > startBlock);
+        endBlock = _newBlock;
     }
 
     function emergencyToggle()
