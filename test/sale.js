@@ -356,6 +356,29 @@ contract('Sale', (accounts) => {
       await as(owner, sale.changeStartBlock, saleConf.startBlock);
     });
 
+    it('should change the endBlock to 10000', async () => {
+      const sale = await Sale.deployed();
+      await as(owner, sale.changeEndBlock, 10000);
+      const endBlock = await sale.endBlock.call();
+      const expected = 10000;
+      const errMsg = `${ownerAccessError} change the end block`;
+      assert.strictEqual(endBlock.toString(10), expected.toString(10), errMsg);
+    });
+
+    it('should fail to change the endBlock to 1', async () => {
+      const sale = await Sale.deployed();
+      try {
+        await as(owner, sale.changeEndBlock, 1);
+      } catch (err) {
+        const errMsg = err.toString();
+        assert(isEVMException(err), errMsg);
+      }
+      const endBlock = await sale.endBlock.call();
+      const startBlock = await sale.startBlock.call();
+      const errMsg = 'endBlock less than startBlock should not be allowed';
+      assert.isAtLeast(endBlock.toNumber(), startBlock.toNumber(), errMsg);
+    });
+
     it('should change the wallet address', async () => {
       const newWallet = '0x0000000000000000000000000000000000000001';
       const sale = await Sale.deployed();
@@ -784,4 +807,3 @@ contract('Sale', (accounts) => {
     });
   });
 });
-
