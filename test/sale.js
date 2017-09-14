@@ -367,16 +367,16 @@ contract('Sale', (accounts) => {
 
     it('should fail to change the endBlock to 1', async () => {
       const sale = await Sale.deployed();
+      const originalEndBlock = await sale.endBlock.call();
       try {
         await as(owner, sale.changeEndBlock, 1);
       } catch (err) {
         const errMsg = err.toString();
         assert(isEVMException(err), errMsg);
       }
-      const endBlock = await sale.endBlock.call();
-      const startBlock = await sale.startBlock.call();
+      const finalEndBlock = await sale.endBlock.call();
       const errMsg = 'endBlock less than startBlock should not be allowed';
-      assert.isAtLeast(endBlock.toNumber(), startBlock.toNumber(), errMsg);
+      assert.strictEqual(originalEndBlock.toString(10), finalEndBlock.toString(10), errMsg);
     });
 
     it('should change the wallet address', async () => {
