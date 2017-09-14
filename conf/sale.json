@@ -3,6 +3,7 @@
   "wallet": "0x3Ebe70Ed8122cF0EE7c1Ae1dAc5A7362DC240Ec0",
   "price": "66670",
   "startBlock": "500",
-  "freezeBlock": "420"
+  "freezeBlock": "420",
+  "endBlock": "2666"
 }
 

@@ -104,6 +104,7 @@ module.exports = (deployer) => {
     saleConf.freezeBlock,
     preBuyers.length,
     timeLockData.beneficiaries.length,
+    saleConf.endBlock,
   )
     .then(() => distributePreBuyersTokens(preBuyers, preBuyersTokens))
     .then(() => distributeTimelockedTokens(
