@@ -273,7 +273,7 @@ contract('Sale', (accounts) => {
     it('should not allow a non-owner to change the startBlock.', async () => {
       const sale = await Sale.deployed();
       try {
-        await as(james, sale.startBlock, saleConf.startBlock + 1);
+        await as(james, sale.changeStartBlock, saleConf.startBlock + 1);
       } catch (err) {
         const errMsg = err.toString();
         assert(isEVMException(err), errMsg);
@@ -287,7 +287,7 @@ contract('Sale', (accounts) => {
     it('should not allow a non-owner to change the owner', async () => {
       const sale = await Sale.deployed();
       try {
-        await as(james, sale.owner, james);
+        await as(james, sale.changeOwner, james);
       } catch (err) {
         const errMsg = err.toString();
         assert(isEVMException(err), errMsg);
@@ -301,7 +301,7 @@ contract('Sale', (accounts) => {
     it('should not allow a non-owner to change the wallet', async () => {
       const sale = await Sale.deployed();
       try {
-        await as(james, sale.wallet, james);
+        await as(james, sale.changeWallet, james);
       } catch (err) {
         const errMsg = err.toString();
         assert(isEVMException(err), errMsg);
@@ -343,7 +343,7 @@ contract('Sale', (accounts) => {
       const expected = 2666;
       const errMsg = `${ownerAccessError} change the price`;
       assert.strictEqual(price.toString(10), expected.toString(10), errMsg);
-      await as(owner, sale.changePrice, saleConf.price);
+      await as(owner, sale.changePrice, saleConf.price.toString(10));
     });
 
     it('should change the startBlock to 2666.', async () => {
@@ -353,7 +353,7 @@ contract('Sale', (accounts) => {
       const expected = 2666;
       const errMsg = `${ownerAccessError} change the start block`;
       assert.strictEqual(price.toString(10), expected.toString(10), errMsg);
-      await as(owner, sale.changeStartBlock, saleConf.startBlock);
+      await as(owner, sale.changeStartBlock, saleConf.startBlock.toString(10));
     });
 
     it('should change the wallet address', async () => {
@@ -652,7 +652,7 @@ contract('Sale', (accounts) => {
       const sale = await Sale.deployed();
       const tokenAddr = await sale.token.call();
       const token = HumanStandardToken.at(tokenAddr);
-      await as(edwhale, token.transfer, james, transferAmount);
+      await as(edwhale, token.transfer, james, transferAmount.toString(10));
       const edwhaleFinalBalance = await getTokenBalanceOf(edwhale);
       const edwhaleExpected = edwhaleStartingBalance.sub(transferAmount);
       const errMsg = balanceError;
@@ -754,7 +754,7 @@ contract('Sale', (accounts) => {
 
         try {
           await as(beneficiary.address, disburser.withdraw,
-            beneficiary.address, new BN(tranch.amount, 10));
+            beneficiary.address, new BN(tranch.amount, 10).toString(10));
           const beneficiaryBalance = await getTokenBalanceOf(beneficiary.address);
           const expected = beneficiaryStartingBalance.add(new BN(tranch.amount, 10));
           const errMsg = 'Beneficiary has an unaccountable balance';
