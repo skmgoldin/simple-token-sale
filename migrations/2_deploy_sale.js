@@ -2,7 +2,6 @@
 
 const Sale = artifacts.require('./Sale.sol');
 const fs = require('fs');
-const BN = require('bn.js');
 
 const distributePreBuyersTokens = async function distributePreBuyersTokens(addresses, tokens) {
   const BATCHSIZE = 30;
@@ -88,7 +87,7 @@ module.exports = (deployer) => {
 
   const preBuyers = Object.keys(preBuyersConf).map(preBuyer => preBuyersConf[preBuyer].address);
   const preBuyersTokens = Object.keys(preBuyersConf).map(preBuyer =>
-    new BN(preBuyersConf[preBuyer].amount, 10));
+    preBuyersConf[preBuyer].amount);
 
   const timeLockData = flattenTimeLockData(timelocksConf);
 
