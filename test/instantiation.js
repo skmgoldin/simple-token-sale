@@ -10,14 +10,14 @@ const saleConf = JSON.parse(fs.readFileSync('./conf/sale.json'));
 const tokenConf = JSON.parse(fs.readFileSync('./conf/token.json'));
 
 contract('Sale', () => {
-  before(() => {
-    saleConf.price = new BN(saleConf.price, 10);
-    saleConf.startBlock = new BN(saleConf.startBlock, 10);
-    tokenConf.initialAmount = new BN(tokenConf.initialAmount, 10);
-  });
-
   describe('Instantiation', () => {
     const badInitialization = 'was not initialized properly';
+
+    before(() => {
+      saleConf.price = new BN(saleConf.price, 10);
+      saleConf.startBlock = new BN(saleConf.startBlock, 10);
+      tokenConf.initialAmount = new BN(tokenConf.initialAmount, 10);
+    });
 
     it(`should instantiate with the price set to ${saleConf.price} Wei.`, async () => {
       const sale = await Sale.deployed();

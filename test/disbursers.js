@@ -13,13 +13,13 @@ const saleConf = JSON.parse(fs.readFileSync('./conf/sale.json'));
 const tokenConf = JSON.parse(fs.readFileSync('./conf/token.json'));
 
 contract('Sale', () => {
-  before(() => {
-    saleConf.price = new BN(saleConf.price, 10);
-    saleConf.startBlock = new BN(saleConf.startBlock, 10);
-    tokenConf.initialAmount = new BN(tokenConf.initialAmount, 10);
-  });
-
   describe('Filters and disbursers', () => {
+    before(() => {
+      saleConf.price = new BN(saleConf.price, 10);
+      saleConf.startBlock = new BN(saleConf.startBlock, 10);
+      tokenConf.initialAmount = new BN(tokenConf.initialAmount, 10);
+    });
+
     function signerAccessFailureFor(address) {
       return `WARNING: could not unlock account ${address}.\n` +
              'This is probably because this beneficiary\'s private key is not generated \n' +

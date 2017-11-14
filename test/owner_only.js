@@ -13,15 +13,15 @@ const tokenConf = JSON.parse(fs.readFileSync('./conf/token.json'));
 contract('Sale', (accounts) => {
   const [owner, james, miguel] = accounts;
 
-  before(() => {
-    saleConf.price = new BN(saleConf.price, 10);
-    saleConf.startBlock = new BN(saleConf.startBlock, 10);
-    tokenConf.initialAmount = new BN(tokenConf.initialAmount, 10);
-  });
-
   describe('Owner-only functions', () => {
     const nonOwnerAccessError = 'A non-owner was able to';
     const ownerAccessError = 'An owner was unable able to';
+
+    before(() => {
+      saleConf.price = new BN(saleConf.price, 10);
+      saleConf.startBlock = new BN(saleConf.startBlock, 10);
+      tokenConf.initialAmount = new BN(tokenConf.initialAmount, 10);
+    });
 
     it('should not allow a non-owner to change the price.', async () => {
       const sale = await Sale.deployed();

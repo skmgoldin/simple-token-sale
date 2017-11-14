@@ -14,16 +14,16 @@ const tokenConf = JSON.parse(fs.readFileSync('./conf/token.json'));
 let tokensForSale;
 
 contract('Sale', () => {
-  before(() => {
-    const tokensPreAllocated = utils.totalPreSoldTokens().add(utils.totalTimelockedTokens());
-    saleConf.price = new BN(saleConf.price, 10);
-    saleConf.startBlock = new BN(saleConf.startBlock, 10);
-    tokenConf.initialAmount = new BN(tokenConf.initialAmount, 10);
-    tokensForSale = tokenConf.initialAmount.sub(tokensPreAllocated);
-  });
-
   describe('Initial token issuance', () => {
     const wrongTokenBalance = 'has an incorrect token balance.';
+
+    before(() => {
+      const tokensPreAllocated = utils.totalPreSoldTokens().add(utils.totalTimelockedTokens());
+      saleConf.price = new BN(saleConf.price, 10);
+      saleConf.startBlock = new BN(saleConf.startBlock, 10);
+      tokenConf.initialAmount = new BN(tokenConf.initialAmount, 10);
+      tokensForSale = tokenConf.initialAmount.sub(tokensPreAllocated);
+    });
 
     it('should instantiate preBuyers with the proper number of tokens', () =>
       Promise.all(

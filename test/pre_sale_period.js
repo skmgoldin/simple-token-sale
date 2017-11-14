@@ -9,16 +9,16 @@ const saleConf = JSON.parse(fs.readFileSync('./conf/sale.json'));
 const tokenConf = JSON.parse(fs.readFileSync('./conf/token.json'));
 
 contract('Sale', (accounts) => {
-  const james = accounts[1];
-
-  before(() => {
-    saleConf.price = new BN(saleConf.price, 10);
-    saleConf.startBlock = new BN(saleConf.startBlock, 10);
-    tokenConf.initialAmount = new BN(tokenConf.initialAmount, 10);
-  });
+  const [, james] = accounts;
 
   describe('Pre-sale period', () => {
     const earlyPurchaseError = ' was able to purchase tokens early';
+
+    before(() => {
+      saleConf.price = new BN(saleConf.price, 10);
+      saleConf.startBlock = new BN(saleConf.startBlock, 10);
+      tokenConf.initialAmount = new BN(tokenConf.initialAmount, 10);
+    });
 
     it('should reject a purchase from James.', async () => {
       const startingBalance = await utils.getTokenBalanceOf(james);
