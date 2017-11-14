@@ -45,9 +45,7 @@ contract('Sale', (accounts) => {
       const finalBalance = await utils.getTokenBalanceOf(edwhale);
       const expected = startingBalance;
       const errMsg = balanceError;
-      assert.strictEqual(
-        finalBalance.toString(10), expected.toString(10), errMsg,
-      );
+      assert.strictEqual(finalBalance.toString(10), expected.toString(10), errMsg);
     });
 
     it('should return excess Wei to Edwhale', async () => {
@@ -67,9 +65,7 @@ contract('Sale', (accounts) => {
       const expected = startingBalance.sub(expectedEthDebit);
       const errMsg = 'Edwhale\'s ether balance is not utils.as expected following ' +
         'a purchase transaction';
-      assert.strictEqual(
-        finalBalance.toString(10), expected.toString(10), errMsg,
-      );
+      assert.strictEqual(finalBalance.toString(10), expected.toString(10), errMsg);
     });
 
     it('should transfer all the remaining tokens to Edwhale.', async () => {

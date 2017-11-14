@@ -25,8 +25,10 @@ const distributePreBuyersTokens = async function distributePreBuyersTokens(addre
   ));
 };
 
-const distributeTimelockedTokens = async function distributeTimeLockedTokens(addresses, tokens,
-  timelocks, periods, logs) {
+const distributeTimelockedTokens = async function distributeTimeLockedTokens(
+  addresses, tokens,
+  timelocks, periods, logs,
+) {
   const BATCHSIZE = 4;
   if (addresses.length !== tokens.length) { // expand
     throw new Error('The number of pre-buyers and pre-buyer token allocations do not match');
@@ -38,8 +40,10 @@ const distributeTimelockedTokens = async function distributeTimeLockedTokens(add
   const periodsChunk = periods.slice(0, BATCHSIZE);
 
   const sale = await Sale.deployed();
-  const receipt = await sale.distributeTimelockedTokens(addressesChunk, tokensChunk,
-    timelocksChunk, periodsChunk);
+  const receipt = await sale.distributeTimelockedTokens(
+    addressesChunk, tokensChunk,
+    timelocksChunk, periodsChunk,
+  );
   console.log(`Distributed a batch of ${addressesChunk.length} timelocked token chunks`);
 
   if (addresses.length <= BATCHSIZE) {
@@ -91,7 +95,8 @@ module.exports = (deployer) => {
 
   const timeLockData = flattenTimeLockData(timelocksConf);
 
-  return deployer.deploy(Sale,
+  return deployer.deploy(
+    Sale,
     saleConf.owner,
     saleConf.wallet,
     tokenConf.initialAmount,

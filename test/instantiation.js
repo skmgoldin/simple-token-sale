@@ -48,9 +48,7 @@ contract('Sale', () => {
       const startBlock = await sale.startBlock.call();
       const expected = saleConf.startBlock;
       const errMsg = `The start block ${badInitialization}`;
-      assert.strictEqual(
-        startBlock.toString(10), expected.toString(10), errMsg,
-      );
+      assert.strictEqual(startBlock.toString(10), expected.toString(10), errMsg);
     });
   });
 });

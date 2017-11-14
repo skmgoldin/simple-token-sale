@@ -28,33 +28,34 @@ contract('Sale', () => {
     }
 
     it('Should not allow beneficiarys to withdraw tokens before the vesting date', async () =>
-      Promise.all(
-        utils.getTimelockedBeneficiaries().map(async (beneficiary) => {
-          const disbursers = utils.getDisbursersForBeneficiary(beneficiary.address);
-          return Promise.all(
-            disbursers.map(async (disburser) => {
-              try {
-                const maxWithdraw =
+      Promise.all(utils.getTimelockedBeneficiaries().map(async (beneficiary) => {
+        const disbursers = utils.getDisbursersForBeneficiary(beneficiary.address);
+        return Promise.all(disbursers.map(async (disburser) => {
+          try {
+            const maxWithdraw =
                   await utils.as(beneficiary.address, disburser.calcMaxWithdraw.call);
-                const expected = '0';
-                assert.strictEqual(maxWithdraw.toString(10), expected,
-                  `Expected maxWithdraw to be zero for ${beneficiary.address}`);
-                await utils.as(beneficiary.address, disburser.withdraw, beneficiary.address,
-                  maxWithdraw + 1);
-                assert(false,
-                  `${beneficiary.address} was able to withdraw timelocked tokens early`);
-              } catch (err) {
-                if (utils.isSignerAccessFailure(err)) {
-                  console.log(signerAccessFailureFor(beneficiary.address));
-                } else {
-                  assert(utils.isEVMException(err), err.toString());
-                }
-              }
-            }),
-          );
-        }),
-      ),
-    );
+            const expected = '0';
+            assert.strictEqual(
+              maxWithdraw.toString(10), expected,
+              `Expected maxWithdraw to be zero for ${beneficiary.address}`,
+            );
+            await utils.as(
+              beneficiary.address, disburser.withdraw, beneficiary.address,
+              maxWithdraw + 1,
+            );
+            assert(
+              false,
+              `${beneficiary.address} was able to withdraw timelocked tokens early`,
+            );
+          } catch (err) {
+            if (utils.isSignerAccessFailure(err)) {
+              console.log(signerAccessFailureFor(beneficiary.address));
+            } else {
+              assert(utils.isEVMException(err), err.toString());
+            }
+          }
+        }));
+      })));
 
     it('Should allow beneficiarys to withdraw from their disbursers after they vest', async () => {
       function getEVMSnapshot() {
@@ -106,8 +107,10 @@ contract('Sale', () => {
           utils.getDisburserByBeneficiaryAndTranch(beneficiary.address, tranch);
 
         try {
-          await utils.as(beneficiary.address, disburser.withdraw,
-            beneficiary.address, new BN(tranch.amount, 10).toString(10));
+          await utils.as(
+            beneficiary.address, disburser.withdraw,
+            beneficiary.address, new BN(tranch.amount, 10).toString(10),
+          );
           const beneficiaryBalance = await utils.getTokenBalanceOf(beneficiary.address);
           const expected = beneficiaryStartingBalance.add(new BN(tranch.amount, 10));
           const errMsg = 'Beneficiary has an unaccountable balance';

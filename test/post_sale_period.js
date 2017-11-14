@@ -113,14 +113,10 @@ contract('Sale', (accounts) => {
       const edwhaleFinalBalance = await utils.getTokenBalanceOf(edwhale);
       const edwhaleExpected = edwhaleStartingBalance.sub(transferAmount);
       const errMsg = balanceError;
-      assert.strictEqual(
-        edwhaleFinalBalance.toString(10), edwhaleExpected.toString(10), errMsg,
-      );
+      assert.strictEqual(edwhaleFinalBalance.toString(10), edwhaleExpected.toString(10), errMsg);
       const jamesFinalBalance = await utils.getTokenBalanceOf(james);
       const jamesExpected = jamesStartingBalance.add(transferAmount);
-      assert.strictEqual(
-        jamesFinalBalance.toString(10), jamesExpected.toString(10), errMsg,
-      );
+      assert.strictEqual(jamesFinalBalance.toString(10), jamesExpected.toString(10), errMsg);
     });
   });
 });

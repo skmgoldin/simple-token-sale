@@ -33,9 +33,7 @@ contract('Sale', (accounts) => {
       const finalBalance = await utils.getTokenBalanceOf(james);
       const expected = startingBalance;
       const errMsg = james + earlyPurchaseError;
-      assert.equal(
-        finalBalance.toString(10), expected.toString(10), errMsg,
-      );
+      assert.equal(finalBalance.toString(10), expected.toString(10), errMsg);
     });
   });
 });

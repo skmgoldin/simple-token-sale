@@ -55,8 +55,7 @@ const utils = {
   getDisburserByBeneficiaryAndTranch: (beneficiary, tranch) => {
     const logForTranch = logs.find(log =>
       log.args.beneficiary === beneficiary.toLowerCase() &&
-      log.args.amount === tranch.amount,
-    );
+      log.args.amount === tranch.amount);
 
     if (logForTranch === undefined) { throw new Error(`Missing disburser for ${beneficiary}`); }
 
@@ -65,11 +64,9 @@ const utils = {
 
   getDisbursersForBeneficiary: (beneficiary) => {
     const tranches = Object.keys(utils.getTranchesForBeneficiary(beneficiary)).map(tranchIndex =>
-      utils.getTranchesForBeneficiary(beneficiary)[tranchIndex],
-    );
+      utils.getTranchesForBeneficiary(beneficiary)[tranchIndex]);
     return tranches.map(tranch =>
-      utils.getDisburserByBeneficiaryAndTranch(beneficiary, tranch),
-    );
+      utils.getDisburserByBeneficiaryAndTranch(beneficiary, tranch));
   },
 
   getTimelockedBeneficiaries: () =>
@@ -81,12 +78,11 @@ const utils = {
 
       utils.getTimelockedBeneficiaries().forEach((beneficiary) => {
         const tranches = utils.getTranchesForBeneficiary(beneficiary.address);
-        disburserTokenBalances = disburserTokenBalances.concat(
-          Object.keys(tranches).map((tranchIndex) => {
+        disburserTokenBalances =
+          disburserTokenBalances.concat(Object.keys(tranches).map((tranchIndex) => {
             const tranch = tranches[tranchIndex];
             return tranch.amount;
-          }),
-        );
+          }));
       });
 
       return disburserTokenBalances;
@@ -107,7 +103,7 @@ const utils = {
   forceMine: blockToMine =>
     new Promise(async (resolve, reject) => {
       if (!BN.isBN(blockToMine)) {
-        reject('Supplied block number must be a BN.');
+        reject(new Error('Supplied block number must be a BN.'));
       }
       const blockNumber = await ethQuery.blockNumber();
       if (blockNumber.lt(blockToMine)) {
