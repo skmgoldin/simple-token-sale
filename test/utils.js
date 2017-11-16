@@ -15,8 +15,8 @@ const timelocksConf = JSON.parse(fs.readFileSync('./conf/timelocks.json'));
 const saleConf = JSON.parse(fs.readFileSync('./conf/sale.json'));
 const logs = JSON.parse(fs.readFileSync('./logs/logs.json'));
 
-const ethRPC = new EthRPC(new HttpProvider('http://localhost:7545'));
-const ethQuery = new EthQuery(new HttpProvider('http://localhost:7545'));
+const ethRPC = new EthRPC(new HttpProvider('http://192.168.1.2:7545'));
+const ethQuery = new EthQuery(new HttpProvider('http://192.168.1.2:7545'));
 
 const utils = {
 

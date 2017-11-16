@@ -14,6 +14,13 @@ if (fs.existsSync('secrets.json')) {
 
 module.exports = {
   networks: {
+    development: {
+      host: '192.168.1.2',
+      port: '7545',
+      gas: 4500000,
+      gasPrice: 25000000000,
+      network_id: '*',
+    },
     kovan: {
       provider: new HDWalletProvider(mnemonic, 'https://kovan.infura.io'),
       network_id: '*',
