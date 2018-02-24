@@ -86,7 +86,9 @@ contract Sale {
         uint _freezeBlock,
         uint _totalPreBuyers,
         uint _totalTimelockedBeneficiaries
-    ) {
+    )
+        public
+    {
         owner = _owner;
         wallet = _wallet;
         token = new EIP20(_tokenSupply, _tokenName, _tokenDecimals, _tokenSymbol);
@@ -167,9 +169,10 @@ contract Sale {
     /// @notice You're about to purchase the equivalent of `msg.value` Wei in tokens
     function purchaseTokens()
         saleStarted
-        payable
         setupComplete
         notInEmergency
+        payable
+        public
     {
         /* Calculate whether any of the msg.value needs to be returned to
            the sender. The purchaseAmount is the actual number of tokens which
@@ -200,6 +203,7 @@ contract Sale {
 
     function changeOwner(address _newOwner)
         onlyOwner
+        public
     {
         require(_newOwner != 0);
         owner = _newOwner;
@@ -208,6 +212,7 @@ contract Sale {
     function changePrice(uint _newPrice)
         onlyOwner
         notFrozen
+        public
     {
         require(_newPrice != 0);
         price = _newPrice;
@@ -216,6 +221,7 @@ contract Sale {
     function changeWallet(address _wallet)
         onlyOwner
         notFrozen
+        public
     {
         require(_wallet != 0);
         wallet = _wallet;
@@ -224,6 +230,7 @@ contract Sale {
     function changeStartBlock(uint _newBlock)
         onlyOwner
         notFrozen
+        public
     {
         require(_newBlock != 0);
 
@@ -233,6 +240,7 @@ contract Sale {
 
     function emergencyToggle()
         onlyOwner
+        public
     {
         emergencyFlag = !emergencyFlag;
     }
