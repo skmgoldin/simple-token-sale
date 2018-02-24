@@ -29,7 +29,7 @@ contract('Sale', (accounts) => {
         await utils.as(james, sale.changePrice, saleConf.price + 1);
       } catch (err) {
         const errMsg = err.toString();
-        assert(utils.isEVMException(err), errMsg);
+        assert(utils.isEVMRevert(err), errMsg);
       }
       const price = await sale.price.call();
       const expected = saleConf.price;
@@ -43,7 +43,7 @@ contract('Sale', (accounts) => {
         await utils.as(james, sale.changeStartBlock, saleConf.startBlock + 1);
       } catch (err) {
         const errMsg = err.toString();
-        assert(utils.isEVMException(err), errMsg);
+        assert(utils.isEVMRevert(err), errMsg);
       }
       const startBlock = await sale.startBlock.call();
       const expected = saleConf.startBlock;
@@ -57,7 +57,7 @@ contract('Sale', (accounts) => {
         await utils.as(james, sale.changeOwner, james);
       } catch (err) {
         const errMsg = err.toString();
-        assert(utils.isEVMException(err), errMsg);
+        assert(utils.isEVMRevert(err), errMsg);
       }
       const actualOwner = await sale.owner.call();
       const expected = saleConf.owner.toLowerCase();
@@ -71,7 +71,7 @@ contract('Sale', (accounts) => {
         await utils.as(james, sale.changeWallet, james);
       } catch (err) {
         const errMsg = err.toString();
-        assert(utils.isEVMException(err), errMsg);
+        assert(utils.isEVMRevert(err), errMsg);
       }
       const wallet = await sale.wallet.call();
       const expected = saleConf.wallet;
@@ -85,7 +85,7 @@ contract('Sale', (accounts) => {
         await utils.as(james, sale.emergencyToggle);
       } catch (err) {
         const errMsg = err.toString();
-        assert(utils.isEVMException(err), errMsg);
+        assert(utils.isEVMRevert(err), errMsg);
       }
       const emergencyFlag = await sale.emergencyFlag.call();
       const expected = false;

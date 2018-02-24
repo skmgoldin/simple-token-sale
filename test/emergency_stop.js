@@ -36,7 +36,7 @@ contract('Sale', (accounts) => {
         assert(false, errMsg);
       } catch (err) {
         const errMsg = err.toString();
-        assert(utils.isEVMException(err), errMsg);
+        assert(utils.isEVMRevert(err), errMsg);
       }
       const finalBalance = await utils.getTokenBalanceOf(james);
       const expected = startingBalance;
@@ -53,7 +53,7 @@ contract('Sale', (accounts) => {
         assert(false, errMsg);
       } catch (err) {
         const errMsg = err.toString();
-        assert(utils.isEVMException(err), errMsg);
+        assert(utils.isEVMRevert(err), errMsg);
       }
       const finalBalance = await utils.getTokenBalanceOf(miguel);
       const expected = startingBalance;
@@ -70,7 +70,7 @@ contract('Sale', (accounts) => {
         assert(false, errMsg);
       } catch (err) {
         const errMsg = err.toString();
-        assert(utils.isEVMException(err), errMsg);
+        assert(utils.isEVMRevert(err), errMsg);
       }
       const finalBalance = await utils.getTokenBalanceOf(edwhale);
       const expected = startingBalance;

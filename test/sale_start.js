@@ -30,7 +30,7 @@ contract('Sale', (accounts) => {
         await utils.as(owner, sale.changePrice, saleConf.price + 1);
       } catch (err) {
         const errMsg = err.toString();
-        assert(utils.isEVMException(err), errMsg);
+        assert(utils.isEVMRevert(err), errMsg);
       }
       const price = await sale.price.call();
       const expected = saleConf.price;

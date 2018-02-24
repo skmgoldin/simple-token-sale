@@ -98,7 +98,7 @@ const utils = {
     return err.toString().includes(signerAccessFailure);
   },
 
-  isEVMException: err => err.toString().includes('invalid opcode'),
+  isEVMRevert: err => err.toString().includes('revert'),
 
   forceMine: blockToMine =>
     new Promise(async (resolve, reject) => {

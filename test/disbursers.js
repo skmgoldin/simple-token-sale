@@ -51,7 +51,7 @@ contract('Sale', () => {
             if (utils.isSignerAccessFailure(err)) {
               console.log(signerAccessFailureFor(beneficiary.address));
             } else {
-              assert(utils.isEVMException(err), err.toString());
+              assert(utils.isEVMRevert(err), err.toString());
             }
           }
         }));
