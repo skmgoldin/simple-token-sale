@@ -52,12 +52,12 @@ contract Sale {
     }
 
     modifier setupComplete {
-        assert(preSaleTokensDisbursed && timelockedTokensDisbursed);
+        require(preSaleTokensDisbursed && timelockedTokensDisbursed);
         _;
     }
 
     modifier notInEmergency {
-        assert(emergencyFlag == false);
+        require(emergencyFlag == false);
         _;
     }
 
