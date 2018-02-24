@@ -1,3 +1,5 @@
 build
 secrets.json
 node_modules
+installed_contracts/
+logs/
