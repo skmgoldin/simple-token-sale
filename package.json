@@ -12,11 +12,7 @@
   "author": "Mike Goldin <mike.goldin@consensys.net>",
   "license": "ISC",
   "dependencies": {
-    "aws-sdk": "2.9.0",
-    "bip39": "2.4.0",
     "bn.js": "4.11.6",
-    "ethereumjs-testrpc": "4.0.1",
-    "ethereumjs-wallet": "0.6.0",
     "ethjs-provider-http": "0.1.6",
     "ethjs-query": "0.2.4",
     "ethjs-rpc": "0.1.5",
