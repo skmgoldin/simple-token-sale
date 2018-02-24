@@ -1,0 +1,16 @@
+{
+  "package_name": "Simple Token Sale",
+  "version": "0.1.0",
+  "description": "A fixed-price, finite-supply token sale",
+  "authors": [
+    "Mike Goldin"
+  ],
+  "keywords": [
+    "tokens",
+    "consensys"
+  ],
+  "dependencies": {
+    "tokens": "0.0.3"
+  },
+  "license": "Apache 2.0"
+}

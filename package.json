@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "description": "Contracts for fixed-price, finite-supply token sales.",
   "scripts": {
+    "install": "truffle install",
     "test": "eslint ./ && truffle test",
     "fix": "eslint --fix",
     "lint": "eslint",
