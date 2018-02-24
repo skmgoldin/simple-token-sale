@@ -1,7 +1,5 @@
 pragma solidity ^0.4.11;
-import "tokens/Token.sol";
-// NOTE: ORIGINALLY THIS WAS "TOKENS/ABSTRACTTOKEN.SOL"... CHECK THAT
-
+import "tokens/eip20/EIP20.sol";
 
 /// @title Disbursement contract - allows to distribute tokens over time
 /// @author Stefan George - <stefan@gnosis.pm>
@@ -15,7 +13,7 @@ contract Disbursement {
     uint public disbursementPeriod;
     uint public startDate;
     uint public withdrawnTokens;
-    Token public token;
+    EIP20 public token;
 
     /*
      *  Modifiers
@@ -64,7 +62,7 @@ contract Disbursement {
 
     /// @dev Setup function sets external contracts' addresses
     /// @param _token Token address
-    function setup(Token _token)
+    function setup(EIP20 _token)
         public
         isOwner
     {

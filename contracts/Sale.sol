@@ -1,5 +1,5 @@
 pragma solidity ^0.4.11;
-import "tokens/HumanStandardToken.sol";
+import "tokens/eip20/EIP20.sol";
 import "./Disbursement.sol";
 
 contract Sale {
@@ -18,7 +18,7 @@ contract Sale {
 
     address public owner;
     address public wallet;
-    HumanStandardToken public token;
+    EIP20 public token;
     uint public price;
     uint public startBlock;
     uint public freezeBlock;
@@ -89,7 +89,7 @@ contract Sale {
     ) {
         owner = _owner;
         wallet = _wallet;
-        token = new HumanStandardToken(_tokenSupply, _tokenName, _tokenDecimals, _tokenSymbol);
+        token = new EIP20(_tokenSupply, _tokenName, _tokenDecimals, _tokenSymbol);
         price = _price;
         startBlock = _startBlock;
         freezeBlock = _freezeBlock;

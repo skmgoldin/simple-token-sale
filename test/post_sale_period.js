@@ -8,7 +8,7 @@ const EthQuery = require('ethjs-query');
 const utils = require('./utils');
 
 const Sale = artifacts.require('./Sale.sol');
-const HumanStandardToken = artifacts.require('./HumanStandardToken.sol');
+const EIP20 = artifacts.require('tokens/eip20/EIP20.sol');
 
 const ethQuery = new EthQuery(new HttpProvider('http://localhost:7545'));
 
@@ -108,7 +108,7 @@ contract('Sale', (accounts) => {
       const jamesStartingBalance = await utils.getTokenBalanceOf(james);
       const sale = await Sale.deployed();
       const tokenAddr = await sale.token.call();
-      const token = HumanStandardToken.at(tokenAddr);
+      const token = EIP20.at(tokenAddr);
       await utils.as(edwhale, token.transfer, james, transferAmount.toString(10));
       const edwhaleFinalBalance = await utils.getTokenBalanceOf(edwhale);
       const edwhaleExpected = edwhaleStartingBalance.sub(transferAmount);

@@ -7,7 +7,7 @@ const EthRPC = require('ethjs-rpc');
 const EthQuery = require('ethjs-query');
 
 const Sale = artifacts.require('./Sale.sol');
-const HumanStandardToken = artifacts.require('./HumanStandardToken.sol');
+const EIP20 = artifacts.require('tokens/eip20/EIP20.sol');
 const Disbursement = artifacts.require('./Disbursement.sol');
 
 const preBuyersConf = JSON.parse(fs.readFileSync('./conf/preBuyers.json'));
@@ -29,7 +29,7 @@ const utils = {
   getTokenBalanceOf: async (actor) => {
     const sale = await Sale.deployed();
     const tokenAddr = await sale.token.call();
-    const token = HumanStandardToken.at(tokenAddr);
+    const token = EIP20.at(tokenAddr);
     const balance = await token.balanceOf.call(actor);
     return new BN(balance.toString(10), 10);
   },
